@@ -310,29 +310,30 @@ export default function App() {
           <StatCard 
             title="Total Problems" 
             value={stats.total} 
-            icon={<BookOpen className="w-5 h-5 md:w-6 md:h-6 text-slate-400" />} 
+            icon={<BookOpen className="w-4 h-4 md:w-6 md:h-6 text-slate-400" />} 
             color="border-slate-200"
+            valueColor="text-slate-600 md:text-slate-700"
           />
           <StatCard 
             title="Solved / Resolved" 
             value={stats.solved} 
-            icon={<CheckCircle className="w-5 h-5 md:w-6 md:h-6 text-emerald-500" />} 
+            icon={<CheckCircle className="w-4 h-4 md:w-6 md:h-6 text-emerald-500" />} 
             color="border-emerald-200 bg-emerald-50/30"
-            valueColor="text-emerald-700"
+            valueColor="text-emerald-600 md:text-emerald-700"
           />
           <StatCard 
             title="Remaining Open" 
             value={stats.open} 
-            icon={<Activity className="w-5 h-5 md:w-6 md:h-6 text-amber-500" />} 
+            icon={<Activity className="w-4 h-4 md:w-6 md:h-6 text-amber-500" />} 
             color="border-amber-200 bg-amber-50/30"
-            valueColor="text-amber-700"
+            valueColor="text-amber-600 md:text-amber-700"
           />
           <StatCard 
             title="Lean Assisted" 
             value={stats.aiAssisted} 
-            icon={<BrainCircuit className="w-5 h-5 md:w-6 md:h-6 text-indigo-500" />} 
+            icon={<BrainCircuit className="w-4 h-4 md:w-6 md:h-6 text-indigo-500" />} 
             color="border-indigo-200 bg-indigo-50/30"
-            valueColor="text-indigo-700"
+            valueColor="text-indigo-600 md:text-indigo-700"
           />
         </div>
 
@@ -341,7 +342,7 @@ export default function App() {
           <div className="mb-4 flex flex-col md:flex-row md:items-start justify-between gap-4 shrink-0">
             <div>
               <h2 className="text-xl font-bold text-slate-800">
-                {viewMode === 'burnup' ? 'Cumulative Problems Solved Over Time' : 'Cumulative Open Problems Over Time'}
+                {viewMode === 'burnup' ? 'Cumulative Problems Solved' : 'Remaining Open Problems'}
               </h2>
               <p className="text-sm text-slate-500 hidden md:block">Includes proved, disproved, and formally verified independent/undecidable problems.</p>
             </div>
