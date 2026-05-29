@@ -369,7 +369,7 @@ export default function App() {
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
                 data={data}
-                margin={{ top: 40, right: 10, left: -20, bottom: 0 }}
+                margin={{ top: 40, right: 60, left: -20, bottom: 0 }}
               >
                 <defs>
                   <linearGradient id="colorCumulative" x1="0" y1="0" x2="0" y2="1">
