@@ -338,8 +338,8 @@ export default function App() {
         </div>
 
         {/* Chart Area */}
-        <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col flex-1 min-h-[400px] md:min-h-0">
-          <div className="mb-4 flex flex-col md:flex-row md:items-start justify-between gap-4 shrink-0">
+        <div className="bg-white p-2 md:p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col flex-1 min-h-[400px] md:min-h-0">
+          <div className="mb-2 md:mb-4 flex flex-col md:flex-row md:items-start justify-between gap-2 md:gap-4 shrink-0">
             <div>
               <h2 className="text-xl font-bold text-slate-800">
                 {viewMode === 'burnup' ? 'Cumulative Problems Solved' : 'Remaining Open Problems'}
