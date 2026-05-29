@@ -492,7 +492,27 @@ function ProblemTable({ problems, view, onBack }) {
                     filteredProblems.map((problem, index) => (
                       <tr key={index} className="hover:bg-slate-50 transition-colors duration-100">
                         <td className="px-4 py-3 text-sm text-slate-700 font-medium">
-                          {problem.number || problem.id || '-'}
+                          {problem.number ? (
+                            <a 
+                              href={`https://www.erdosproblems.com/${problem.number}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                            >
+                              {problem.number}
+                            </a>
+                          ) : problem.id ? (
+                            <a 
+                              href={`https://www.erdosproblems.com/${problem.id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                            >
+                              {problem.id}
+                            </a>
+                          ) : (
+                            '-'
+                          )}
                         </td>
                         <td className="px-4 py-3 text-sm text-slate-700 font-medium max-w-xs truncate">
                           {problem.name || problem.title || '-'}
