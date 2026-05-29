@@ -448,29 +448,87 @@ function ProblemTable({ problems, view, onBack }) {
 
     const fetchDescriptions = async () => {
       const descMap = {};
+      const BATCH_SIZE = 3; // Fetch 3 at a time to avoid overwhelming the server
+      const DELAY = 500; // 500ms delay between batches
       
-      for (const problem of filteredProblems) {
-        const problemId = problem.number || problem.id;
-        if (!problemId) continue;
+      // Load cached descriptions first
+      try {
+        const cached = localStorage.getItem('erdos_descriptions');
+        if (cached) {
+          Object.assign(descMap, JSON.parse(cached));
+        }
+      } catch (err) {
+        console.warn('Failed to load cached descriptions:', err);
+      }
 
-        try {
-          const response = await fetch(`https://www.erdosproblems.com/${problemId}`);
-          if (response.ok) {
-            const html = await response.text();
-            // Parse HTML to extract content from problem-text div
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            const problemTextDiv = doc.querySelector('.problem-text .content');
-            if (problemTextDiv) {
-              descMap[problemId] = problemTextDiv.textContent.trim();
+      // Fetch only missing descriptions in batches
+      const problemsToFetch = filteredProblems.filter(p => {
+        const id = p.number || p.id;
+        return id && !descMap[id];
+      });
+
+      for (let i = 0; i < problemsToFetch.length; i += BATCH_SIZE) {
+        const batch = problemsToFetch.slice(i, i + BATCH_SIZE);
+        
+        const batchPromises = batch.map(async (problem) => {
+          const problemId = problem.number || problem.id;
+          if (!problemId) return;
+
+          try {
+            // Try direct fetch first
+            let html;
+            try {
+              const response = await fetch(`https://www.erdosproblems.com/${problemId}`, {
+                mode: 'cors',
+                credentials: 'omit'
+              });
+              if (response.ok) {
+                html = await response.text();
+              }
+            } catch (corsErr) {
+              // If CORS fails, try with a proxy
+              const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://www.erdosproblems.com/${problemId}`)}`;
+              const proxyResponse = await fetch(proxyUrl);
+              if (proxyResponse.ok) {
+                html = await proxyResponse.text();
+              }
             }
+
+            if (html) {
+              // Parse HTML to extract content from problem-text div
+              const parser = new DOMParser();
+              const doc = parser.parseFromString(html, 'text/html');
+              const problemTextDiv = doc.querySelector('.problem-text .content');
+              if (problemTextDiv) {
+                const text = problemTextDiv.textContent.trim();
+                if (text && text.length > 0) {
+                  descMap[problemId] = text;
+                }
+              }
+            }
+          } catch (err) {
+            console.error(`Failed to fetch description for problem ${problemId}:`, err);
           }
-        } catch (err) {
-          console.error(`Failed to fetch description for problem ${problemId}:`, err);
+        });
+
+        await Promise.all(batchPromises);
+        
+        // Update state after each batch
+        setDescriptions(Object.assign({}, descMap));
+
+        // Add delay between batches (except after the last one)
+        if (i + BATCH_SIZE < problemsToFetch.length) {
+          await new Promise(resolve => setTimeout(resolve, DELAY));
         }
       }
-      
-      setDescriptions(descMap);
+
+      // Cache the descriptions
+      try {
+        localStorage.setItem('erdos_descriptions', JSON.stringify(descMap));
+      } catch (err) {
+        console.warn('Failed to cache descriptions:', err);
+      }
+
       setLoadingDescriptions(false);
     };
 
