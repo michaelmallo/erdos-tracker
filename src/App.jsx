@@ -230,7 +230,7 @@ export default function App() {
       return (
         <div className="bg-white/90 backdrop-blur-md p-4 rounded-xl shadow-lg border border-slate-100">
           <p className="text-slate-500 font-semibold mb-1">{displayLabel}</p>
-          <p className={`${isBurndown ? 'text-amber-600' : 'text-blue-600'} font-bold text-lg`}>
+          <p className={`${isBurndown ? 'text-amber-600' : 'text-emerald-600'} font-bold text-lg`}>
             {payload[0].value} <span className="text-sm font-medium text-slate-400">
               {isBurndown ? 'Remaining Open' : 'Total Solved'}
             </span>
@@ -350,7 +350,7 @@ export default function App() {
             <div className="flex bg-slate-100 p-1 rounded-lg w-full sm:w-max shadow-inner mt-1 md:mt-0 shrink-0">
               <button 
                 onClick={() => setViewMode('burnup')} 
-                className={`flex-1 sm:flex-none justify-center px-2 py-1 md:px-4 md:py-2 rounded-md text-xs md:text-sm font-bold transition-all duration-200 flex items-center gap-1 md:gap-2 ${viewMode === 'burnup' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`flex-1 sm:flex-none justify-center px-2 py-1 md:px-4 md:py-2 rounded-md text-xs md:text-sm font-bold transition-all duration-200 flex items-center gap-1 md:gap-2 ${viewMode === 'burnup' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-500 hover:text-slate-700'}`}
               >
                 <CheckCircle className={`w-3.5 h-3.5 md:w-4 md:h-4 ${viewMode === 'burnup' ? 'text-emerald-600' : ''}`} />
                 Burn-up (Solved)
