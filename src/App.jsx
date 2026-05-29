@@ -414,6 +414,9 @@ export default function App() {
 
 // Problem table component for viewing problems by category
 function ProblemTable({ problems, view, onBack }) {
+  const [descriptions, setDescriptions] = useState({});
+  const [loadingDescriptions, setLoadingDescriptions] = useState(true);
+
   const getFilteredProblems = () => {
     if (!Array.isArray(problems)) return [];
 
@@ -438,6 +441,42 @@ function ProblemTable({ problems, view, onBack }) {
     });
   };
 
+  // Fetch descriptions from problem pages
+  useEffect(() => {
+    const filteredProblems = getFilteredProblems();
+    setLoadingDescriptions(true);
+
+    const fetchDescriptions = async () => {
+      const descMap = {};
+      
+      for (const problem of filteredProblems) {
+        const problemId = problem.number || problem.id;
+        if (!problemId) continue;
+
+        try {
+          const response = await fetch(`https://www.erdosproblems.com/${problemId}`);
+          if (response.ok) {
+            const html = await response.text();
+            // Parse HTML to extract content from problem-text div
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const problemTextDiv = doc.querySelector('.problem-text .content');
+            if (problemTextDiv) {
+              descMap[problemId] = problemTextDiv.textContent.trim();
+            }
+          }
+        } catch (err) {
+          console.error(`Failed to fetch description for problem ${problemId}:`, err);
+        }
+      }
+      
+      setDescriptions(descMap);
+      setLoadingDescriptions(false);
+    };
+
+    fetchDescriptions();
+  }, [view, problems]);
+
   const getViewTitle = () => {
     const titles = {
       total: 'All Erdős Problems',
@@ -461,6 +500,7 @@ function ProblemTable({ problems, view, onBack }) {
             </h1>
             <p className="text-slate-500 text-sm mt-1">
               {filteredProblems.length} problem{filteredProblems.length !== 1 ? 's' : ''}
+              {loadingDescriptions && ' (loading descriptions...)'}
             </p>
           </div>
           <button
@@ -481,7 +521,6 @@ function ProblemTable({ problems, view, onBack }) {
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Number</th>
-                    <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Name</th>
                     <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Description</th>
                     <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Status</th>
                     <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Last Updated</th>
@@ -489,56 +528,47 @@ function ProblemTable({ problems, view, onBack }) {
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   {filteredProblems.length > 0 ? (
-                    filteredProblems.map((problem, index) => (
-                      <tr key={index} className="hover:bg-slate-50 transition-colors duration-100">
-                        <td className="px-4 py-3 text-sm text-slate-700 font-medium">
-                          {problem.number ? (
-                            <a 
-                              href={`https://www.erdosproblems.com/${problem.number}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
-                            >
-                              {problem.number}
-                            </a>
-                          ) : problem.id ? (
-                            <a 
-                              href={`https://www.erdosproblems.com/${problem.id}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
-                            >
-                              {problem.id}
-                            </a>
-                          ) : (
-                            '-'
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-slate-700 font-medium max-w-xs truncate">
-                          {problem.name || problem.title || '-'}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-slate-600 max-w-md truncate">
-                          {problem.description || '-'}
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                            (problem.status?.state || 'open').toLowerCase().includes('proved') 
-                              ? 'bg-emerald-100 text-emerald-700'
-                              : (problem.status?.state || 'open').toLowerCase().includes('open')
-                              ? 'bg-amber-100 text-amber-700'
-                              : 'bg-slate-100 text-slate-700'
-                          }`}>
-                            {problem.status?.state || 'Open'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-slate-600">
-                          {problem.status?.last_update ? new Date(problem.status.last_update).toLocaleDateString() : '-'}
-                        </td>
-                      </tr>
-                    ))
+                    filteredProblems.map((problem, index) => {
+                      const problemId = problem.number || problem.id;
+                      return (
+                        <tr key={index} className="hover:bg-slate-50 transition-colors duration-100">
+                          <td className="px-4 py-3 text-sm text-slate-700 font-medium">
+                            {problemId ? (
+                              <a 
+                                href={`https://www.erdosproblems.com/${problemId}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                              >
+                                {problemId}
+                              </a>
+                            ) : (
+                              '-'
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-slate-600 max-w-2xl truncate">
+                            {descriptions[problemId] || (loadingDescriptions ? 'Loading...' : '-')}
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                              (problem.status?.state || 'open').toLowerCase().includes('proved') 
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : (problem.status?.state || 'open').toLowerCase().includes('open')
+                                ? 'bg-amber-100 text-amber-700'
+                                : 'bg-slate-100 text-slate-700'
+                            }`}>
+                              {problem.status?.state || 'Open'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-slate-600">
+                            {problem.status?.last_update ? new Date(problem.status.last_update).toLocaleDateString() : '-'}
+                          </td>
+                        </tr>
+                      );
+                    })
                   ) : (
                     <tr>
-                      <td colSpan="5" className="px-4 py-8 text-center text-slate-500">
+                      <td colSpan="4" className="px-4 py-8 text-center text-slate-500">
                         No problems found in this category.
                       </td>
                     </tr>
