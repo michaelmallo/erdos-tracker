@@ -317,9 +317,9 @@ export default function App() {
           <StatCard 
             title="Solved / Resolved" 
             value={stats.solved} 
-            icon={<CheckCircle className="w-4 h-4 md:w-6 md:h-6 text-emerald-700" />} 
+            icon={<CheckCircle className="w-4 h-4 md:w-6 md:h-6 text-emerald-600" />} 
             color="border-emerald-200 bg-emerald-50/30"
-            valueColor="text-emerald-700"
+            valueColor="text-emerald-600"
           />
           <StatCard 
             title="Remaining Open" 
@@ -352,7 +352,7 @@ export default function App() {
                 onClick={() => setViewMode('burnup')} 
                 className={`flex-1 sm:flex-none justify-center px-2 py-1 md:px-4 md:py-2 rounded-md text-xs md:text-sm font-bold transition-all duration-200 flex items-center gap-1 md:gap-2 ${viewMode === 'burnup' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
               >
-                <CheckCircle className={`w-3.5 h-3.5 md:w-4 md:h-4 ${viewMode === 'burnup' ? 'text-emerald-500' : ''}`} />
+                <CheckCircle className={`w-3.5 h-3.5 md:w-4 md:h-4 ${viewMode === 'burnup' ? 'text-emerald-600' : ''}`} />
                 Burn-up (Solved)
               </button>
               <button 
