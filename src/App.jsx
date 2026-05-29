@@ -294,7 +294,7 @@ export default function App() {
               </h1>
             </div>
             <p className="text-slate-500 max-w-2xl text-sm md:text-lg">
-              Live tracking of the resolution of Paul Erdős's mathematical conjectures.
+              Tracking the resolution of Paul Erdős's mathematical conjectures
             </p>
           </div>
           {error && (
@@ -430,8 +430,8 @@ export default function App() {
 // Reusable stat card component
 function StatCard({ title, value, icon, color, valueColor = "text-slate-800", subtitle }) {
   return (
-    <div className={`p-3 md:p-4 rounded-xl border ${color} bg-white shadow-sm flex flex-col justify-between`}>
-      <div className="flex justify-between items-start mb-2 gap-1">
+    <div className={`p-2 md:p-4 rounded-xl border ${color} bg-white shadow-sm flex flex-col justify-between`}>
+      <div className="flex justify-between items-start mb-1 md:mb-2 gap-1">
         <h3 className="text-[10px] md:text-sm font-semibold text-slate-500 uppercase tracking-wider leading-tight">{title}</h3>
         <div className="shrink-0">{icon}</div>
       </div>
