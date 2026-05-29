@@ -344,7 +344,6 @@ export default function App() {
               <h2 className="text-xl font-bold text-slate-800">
                 {viewMode === 'burnup' ? 'Cumulative Problems Solved' : 'Remaining Open Problems'}
               </h2>
-              <p className="text-sm text-slate-500 hidden md:block">Includes proved, disproved, and formally verified independent/undecidable problems.</p>
             </div>
             
             {/* Toggle Widget */}
