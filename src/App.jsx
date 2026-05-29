@@ -446,6 +446,27 @@ function ProblemTable({ problems, view, onBack }) {
     const filteredProblems = getFilteredProblems();
     setLoadingDescriptions(true);
 
+    const fetchProblemPageHtml = async (problemId) => {
+      const proxies = [
+        (id) => `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://www.erdosproblems.com/${id}`)}`,
+        (id) => `https://thingproxy.freeboard.io/fetch/https://www.erdosproblems.com/${id}`,
+        (id) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(`https://www.erdosproblems.com/${id}`)}`
+      ];
+
+      for (const buildUrl of proxies) {
+        try {
+          const response = await fetch(buildUrl(problemId));
+          if (response.ok) {
+            return await response.text();
+          }
+        } catch (err) {
+          console.warn(`Proxy fetch failed for problem ${problemId}:`, err);
+        }
+      }
+
+      return null;
+    };
+
     const fetchDescriptions = async () => {
       const descMap = {};
       const BATCH_SIZE = 3; // Fetch 3 at a time to avoid overwhelming the server
@@ -475,27 +496,8 @@ function ProblemTable({ problems, view, onBack }) {
           if (!problemId) return;
 
           try {
-            // Try direct fetch first
-            let html;
-            try {
-              const response = await fetch(`https://www.erdosproblems.com/${problemId}`, {
-                mode: 'cors',
-                credentials: 'omit'
-              });
-              if (response.ok) {
-                html = await response.text();
-              }
-            } catch (corsErr) {
-              // If CORS fails, try with a proxy
-              const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://www.erdosproblems.com/${problemId}`)}`;
-              const proxyResponse = await fetch(proxyUrl);
-              if (proxyResponse.ok) {
-                html = await proxyResponse.text();
-              }
-            }
-
+            const html = await fetchProblemPageHtml(problemId);
             if (html) {
-              // Parse HTML to extract content from problem-text div
               const parser = new DOMParser();
               const doc = parser.parseFromString(html, 'text/html');
               const problemTextDiv = doc.querySelector('.problem-text .content');
