@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine
 } from 'recharts';
@@ -16,50 +16,7 @@ export default function App() {
   const [pullDistance, setPullDistance] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Load the js-yaml script dynamically to parse the raw data file, then fetch
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = "https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js";
-    script.async = true;
-    script.onload = () => {
-      fetchErdosData(false);
-    };
-    script.onerror = () => {
-      setError("Failed to load YAML parser.");
-      setLoading(false);
-    };
-    document.head.appendChild(script);
-
-    return () => {
-      document.head.removeChild(script);
-    };
-  }, []);
-
-  const fetchErdosData = async (isBackgroundRefresh = false) => {
-    if (!isBackgroundRefresh) setLoading(true);
-    
-    try {
-      // Fetching the raw ground-truth data from the teorth/erdosproblems repository
-      const response = await fetch('https://raw.githubusercontent.com/teorth/erdosproblems/main/data/problems.yaml');
-      if (!response.ok) throw new Error('Failed to fetch data from GitHub repository.');
-      
-      const yamlText = await response.text();
-      const parsedData = window.jsyaml.load(yamlText);
-      
-      processDataset(parsedData);
-      setError(null);
-    } catch (err) {
-      console.error(err);
-      setError("Unable to connect to the live data source.");
-      setStats({ total: "N/A", solved: "N/A", open: "N/A", aiAssisted: "N/A" });
-      setData([]);
-    } finally {
-      setLoading(false);
-      setIsRefreshing(false);
-      setPullDistance(0);
-    }
-  };
-
+  // Helper function to process the dataset
   const processDataset = (problems) => {
     if (!Array.isArray(problems)) {
       throw new Error("Invalid data format received.");
@@ -103,6 +60,7 @@ export default function App() {
     generateHistoricalData(totalSolved, total);
   };
 
+  // Helper function to generate historical data for the chart
   const generateHistoricalData = (totalSolved, totalProblems) => {
     // Because the exact resolution date isn't consistently formatted in the raw YAML for older problems,
     // we build historically accurate aggregate curves culminating in the live fetched totals, plotted monthly.
@@ -172,6 +130,51 @@ export default function App() {
     setData(scaledHistory);
   };
 
+  // Fetch and process Erdos data
+  const fetchErdosData = async (isBackgroundRefresh = false) => {
+    if (!isBackgroundRefresh) setLoading(true);
+    
+    try {
+      // Fetching the raw ground-truth data from the teorth/erdosproblems repository
+      const response = await fetch('https://raw.githubusercontent.com/teorth/erdosproblems/main/data/problems.yaml');
+      if (!response.ok) throw new Error('Failed to fetch data from GitHub repository.');
+      
+      const yamlText = await response.text();
+      const parsedData = window.jsyaml.load(yamlText);
+      
+      processDataset(parsedData);
+      setError(null);
+    } catch (err) {
+      console.error(err);
+      setError("Unable to connect to the live data source.");
+      setStats({ total: "N/A", solved: "N/A", open: "N/A", aiAssisted: "N/A" });
+      setData([]);
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
+      setPullDistance(0);
+    }
+  };
+
+  // Load the js-yaml script dynamically to parse the raw data file, then fetch
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js";
+    script.async = true;
+    script.onload = () => {
+      fetchErdosData(false);
+    };
+    script.onerror = () => {
+      setError("Failed to load YAML parser.");
+      setLoading(false);
+    };
+    document.head.appendChild(script);
+
+    return () => {
+      document.head.removeChild(script);
+    };
+  }, []);
+
   const xAxisTicks = useMemo(() => {
     return data.filter(d => d.month === 1).map(d => d.dateStr);
   }, [data]);
@@ -211,39 +214,6 @@ export default function App() {
     }
     
     setStartY(0);
-  };
-
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      const isBurndown = payload[0].dataKey === 'remaining';
-      
-      let displayLabel = label;
-      let yearLabel = label;
-      
-      if (typeof label === 'string' && label.includes('-')) {
-        const [year, month] = label.split('-');
-        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        displayLabel = `${monthNames[parseInt(month, 10) - 1]} ${year}`;
-        yearLabel = parseInt(year, 10);
-      }
-
-      return (
-        <div className="bg-white/90 backdrop-blur-md p-4 rounded-xl shadow-lg border border-slate-100">
-          <p className="text-slate-500 font-semibold mb-1">{displayLabel}</p>
-          <p className={`${isBurndown ? 'text-amber-600' : 'text-emerald-600'} font-bold text-lg`}>
-            {payload[0].value} <span className="text-sm font-medium text-slate-400">
-              {isBurndown ? 'Remaining Open' : 'Total Solved'}
-            </span>
-          </p>
-          {yearLabel >= 2024 && (
-            <div className="mt-2 text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md inline-block">
-              AI / Lean Formalization Era
-            </div>
-          )}
-        </div>
-      );
-    }
-    return null;
   };
 
   if (loading) {
@@ -426,6 +396,40 @@ export default function App() {
     </div>
   );
 }
+
+// Custom tooltip component for the chart
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    const isBurndown = payload[0].dataKey === 'remaining';
+    
+    let displayLabel = label;
+    let yearLabel = label;
+    
+    if (typeof label === 'string' && label.includes('-')) {
+      const [year, month] = label.split('-');
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      displayLabel = `${monthNames[parseInt(month, 10) - 1]} ${year}`;
+      yearLabel = parseInt(year, 10);
+    }
+
+    return (
+      <div className="bg-white/90 backdrop-blur-md p-4 rounded-xl shadow-lg border border-slate-100">
+        <p className="text-slate-500 font-semibold mb-1">{displayLabel}</p>
+        <p className={`${isBurndown ? 'text-amber-600' : 'text-emerald-600'} font-bold text-lg`}>
+          {payload[0].value} <span className="text-sm font-medium text-slate-400">
+            {isBurndown ? 'Remaining Open' : 'Total Solved'}
+          </span>
+        </p>
+        {yearLabel >= 2024 && (
+          <div className="mt-2 text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md inline-block">
+            AI / Lean Formalization Era
+          </div>
+        )}
+      </div>
+    );
+  }
+  return null;
+};
 
 // Reusable stat card component
 function StatCard({ title, value, icon, color, valueColor = "text-slate-800", subtitle }) {
