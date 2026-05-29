@@ -310,30 +310,30 @@ export default function App() {
           <StatCard 
             title="Total Problems" 
             value={stats.total} 
-            icon={<BookOpen className="w-4 h-4 md:w-6 md:h-6 text-slate-400" />} 
+            icon={<BookOpen className="w-4 h-4 md:w-6 md:h-6 text-slate-700" />} 
             color="border-slate-200"
-            valueColor="text-slate-400 md:text-slate-700"
+            valueColor="text-slate-700"
           />
           <StatCard 
             title="Solved / Resolved" 
             value={stats.solved} 
-            icon={<CheckCircle className="w-4 h-4 md:w-6 md:h-6 text-emerald-500" />} 
+            icon={<CheckCircle className="w-4 h-4 md:w-6 md:h-6 text-emerald-700" />} 
             color="border-emerald-200 bg-emerald-50/30"
-            valueColor="text-emerald-400 md:text-emerald-700"
+            valueColor="text-emerald-700"
           />
           <StatCard 
             title="Remaining Open" 
             value={stats.open} 
-            icon={<Activity className="w-4 h-4 md:w-6 md:h-6 text-amber-500" />} 
+            icon={<Activity className="w-4 h-4 md:w-6 md:h-6 text-amber-700" />} 
             color="border-amber-200 bg-amber-50/30"
-            valueColor="text-amber-400 md:text-amber-700"
+            valueColor="text-amber-700"
           />
           <StatCard 
             title="Lean Assisted" 
             value={stats.aiAssisted} 
-            icon={<BrainCircuit className="w-4 h-4 md:w-6 md:h-6 text-indigo-500" />} 
+            icon={<BrainCircuit className="w-4 h-4 md:w-6 md:h-6 text-indigo-700" />} 
             color="border-indigo-200 bg-indigo-50/30"
-            valueColor="text-indigo-400 md:text-indigo-700"
+            valueColor="text-indigo-700"
           />
         </div>
 
@@ -436,7 +436,7 @@ function StatCard({ title, value, icon, color, valueColor = "text-slate-800", su
         <div className="shrink-0">{icon}</div>
       </div>
       <div>
-        <div className={`text-xl md:text-3xl font-extrabold ${valueColor}`}>{value}</div>
+        <div className={`text-lg md:text-3xl font-extrabold ${valueColor}`}>{value}</div>
         {subtitle && <div className="text-[10px] md:text-xs font-medium text-slate-500 mt-1">{subtitle}</div>}
       </div>
     </div>
