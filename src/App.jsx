@@ -298,7 +298,7 @@ export default function App() {
             </p>
           </div>
           {error && (
-            <div className="flex items-center gap-2 bg-amber-50 text-amber-700 px-4 py-2 rounded-lg border border-amber-200 shadow-sm text-sm font-medium">
+            <div className="flex items-center gap-2 bg-amber-50 text-amber-600 px-4 py-2 rounded-lg border border-amber-200 shadow-sm text-sm font-medium">
               <AlertTriangle className="w-4 h-4 shrink-0" />
               {error}
             </div>
@@ -324,9 +324,9 @@ export default function App() {
           <StatCard 
             title="Remaining Open" 
             value={stats.open} 
-            icon={<Activity className="w-4 h-4 md:w-6 md:h-6 text-amber-700" />} 
+            icon={<Activity className="w-4 h-4 md:w-6 md:h-6 text-amber-600" />} 
             color="border-amber-200 bg-amber-50/30"
-            valueColor="text-amber-700"
+            valueColor="text-amber-600"
           />
           <StatCard 
             title="Lean Assisted" 
@@ -359,7 +359,7 @@ export default function App() {
                 onClick={() => setViewMode('burndown')} 
                 className={`flex-1 sm:flex-none justify-center px-2 py-1 md:px-4 md:py-2 rounded-md text-xs md:text-sm font-bold transition-all duration-200 flex items-center gap-1 md:gap-2 ${viewMode === 'burndown' ? 'bg-amber-500 shadow-sm text-white' : 'text-slate-500 hover:text-slate-700'}`}
               >
-                <Activity className={`w-3.5 h-3.5 md:w-4 md:h-4 ${viewMode === 'burndown' ? '' : 'text-amber-500'}`} />
+                <Activity className={`w-3.5 h-3.5 md:w-4 md:h-4 ${viewMode === 'burndown' ? '' : 'text-amber-600'}`} />
                 Burn-down (Open)
               </button>
             </div>
