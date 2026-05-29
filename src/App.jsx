@@ -350,14 +350,14 @@ export default function App() {
             <div className="flex bg-slate-100 p-1 rounded-lg w-full sm:w-max shadow-inner mt-1 md:mt-0 shrink-0">
               <button 
                 onClick={() => setViewMode('burnup')} 
-                className={`flex-1 sm:flex-none justify-center px-2 py-1 md:px-4 md:py-2 rounded-md text-xs md:text-sm font-bold transition-all duration-200 flex items-center gap-1 md:gap-2 ${viewMode === 'burnup' ? 'bg-emerald-600/25 shadow-sm text-white' : 'text-emerald-600 hover:text-emerald-800'}`}
+                className={`flex-1 sm:flex-none justify-center px-2 py-1 md:px-4 md:py-2 rounded-md text-xs md:text-sm font-bold transition-all duration-200 flex items-center gap-1 md:gap-2 ${viewMode === 'burnup' ? 'bg-emerald-600/50 shadow-sm text-white' : 'text-emerald-600 hover:text-emerald-800'}`}
               >
                 <CheckCircle className={`w-3.5 h-3.5 md:w-4 md:h-4 ${viewMode === 'burnup' ? '' : 'text-emerald-600'}`} />
                 Burn-up (Solved)
               </button>
               <button 
                 onClick={() => setViewMode('burndown')} 
-                className={`flex-1 sm:flex-none justify-center px-2 py-1 md:px-4 md:py-2 rounded-md text-xs md:text-sm font-bold transition-all duration-200 flex items-center gap-1 md:gap-2 ${viewMode === 'burndown' ? 'bg-amber-600/25 shadow-sm text-white' : 'text-amber-600 hover:text-amber-800'}`}
+                className={`flex-1 sm:flex-none justify-center px-2 py-1 md:px-4 md:py-2 rounded-md text-xs md:text-sm font-bold transition-all duration-200 flex items-center gap-1 md:gap-2 ${viewMode === 'burndown' ? 'bg-amber-600/50 shadow-sm text-white' : 'text-amber-600 hover:text-amber-800'}`}
               >
                 <Activity className={`w-3.5 h-3.5 md:w-4 md:h-4 ${viewMode === 'burndown' ? '' : 'text-amber-600'}`} />
                 Burn-down (Open)
@@ -373,8 +373,8 @@ export default function App() {
               >
                 <defs>
                   <linearGradient id="colorCumulative" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#059669" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#059669" stopOpacity={0}/>
                   </linearGradient>
                   <linearGradient id="colorRemaining" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
@@ -405,11 +405,11 @@ export default function App() {
                   key={viewMode}
                   type="monotone" 
                   dataKey={viewMode === 'burnup' ? 'cumulative' : 'remaining'} 
-                  stroke={viewMode === 'burnup' ? "#3b82f6" : "#f59e0b"} 
+                  stroke={viewMode === 'burnup' ? "#059669" : "#f59e0b"} 
                   strokeWidth={3}
                   fillOpacity={1} 
                   fill={viewMode === 'burnup' ? "url(#colorCumulative)" : "url(#colorRemaining)"} 
-                  activeDot={{ r: 6, fill: viewMode === 'burnup' ? "#2563eb" : "#d97706", stroke: "#fff", strokeWidth: 2 }}
+                  activeDot={{ r: 6, fill: viewMode === 'burnup' ? "#059669" : "#d97706", stroke: "#fff", strokeWidth: 2 }}
                   animationDuration={800}
                 />
               </AreaChart>
