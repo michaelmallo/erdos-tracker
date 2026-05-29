@@ -369,7 +369,7 @@ export default function App() {
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
                 data={data}
-                margin={{ top: 40, right: 60, left: -20, bottom: 0 }}
+                margin={{ top: 40, right: 10, left: -20, bottom: 0 }}
               >
                 <defs>
                   <linearGradient id="colorCumulative" x1="0" y1="0" x2="0" y2="1">
@@ -400,7 +400,7 @@ export default function App() {
                   domain={[0, typeof stats.total === 'number' ? stats.total : 'auto']}
                 />
                 <Tooltip content={<CustomTooltip />} />
-                <ReferenceLine x="2024-01" stroke="#818cf8" strokeDasharray="3 3" label={{ position: 'top', value: 'AI Breakthroughs', fill: '#6366f1', fontSize: 12 }} />
+                <ReferenceLine x="2024-01" stroke="#818cf8" strokeDasharray="3 3" label={{ position: 'top', value: 'AI Era', fill: '#6366f1', fontSize: 12 }} />
                 <Area 
                   key={viewMode}
                   type="monotone" 
