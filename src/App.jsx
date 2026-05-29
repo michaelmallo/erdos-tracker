@@ -350,14 +350,14 @@ export default function App() {
             <div className="flex bg-slate-100 p-1 rounded-lg w-full sm:w-max shadow-inner mt-1 md:mt-0 shrink-0">
               <button 
                 onClick={() => setViewMode('burnup')} 
-                className={`flex-1 sm:flex-none justify-center px-2 py-1 md:px-4 md:py-2 rounded-md text-xs md:text-sm font-bold transition-all duration-200 flex items-center gap-1 md:gap-2 ${viewMode === 'burnup' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`flex-1 sm:flex-none justify-center px-2 py-1 md:px-4 md:py-2 rounded-md text-xs md:text-sm font-bold transition-all duration-200 flex items-center gap-1 md:gap-2 ${viewMode === 'burnup' ? 'bg-emerald-600 shadow-sm text-white' : 'text-emerald-600 hover:text-emerald-800'}`}
               >
-                <CheckCircle className={`w-3.5 h-3.5 md:w-4 md:h-4 ${viewMode === 'burnup' ? 'text-emerald-600' : ''}`} />
+                <CheckCircle className={`w-3.5 h-3.5 md:w-4 md:h-4 ${viewMode === 'burnup' ? '' : 'text-emerald-600'}`} />
                 Burn-up (Solved)
               </button>
               <button 
                 onClick={() => setViewMode('burndown')} 
-                className={`flex-1 sm:flex-none justify-center px-2 py-1 md:px-4 md:py-2 rounded-md text-xs md:text-sm font-bold transition-all duration-200 flex items-center gap-1 md:gap-2 ${viewMode === 'burndown' ? 'bg-amber-500 shadow-sm text-white' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`flex-1 sm:flex-none justify-center px-2 py-1 md:px-4 md:py-2 rounded-md text-xs md:text-sm font-bold transition-all duration-200 flex items-center gap-1 md:gap-2 ${viewMode === 'burndown' ? 'bg-amber-600 shadow-sm text-white' : 'text-amber-600 hover:text-amber-800'}`}
               >
                 <Activity className={`w-3.5 h-3.5 md:w-4 md:h-4 ${viewMode === 'burndown' ? '' : 'text-amber-600'}`} />
                 Burn-down (Open)
