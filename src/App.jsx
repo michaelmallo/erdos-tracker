@@ -293,7 +293,7 @@ export default function App() {
                 Erdős Problem Tracker
               </h1>
             </div>
-            <p className="text-slate-500 max-w-2xl text-sm md:text-lg">
+            <p className="text-slate-500 max-w-2xl text-xs md:text-sm md:text-lg">
               Tracking the resolution of Paul Erdős's mathematical conjectures
             </p>
           </div>
