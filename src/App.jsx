@@ -74,6 +74,7 @@ export default function App() {
     for (let year = startYear; year <= currentYear; year++) {
       const endMonth = (year === currentYear) ? currentMonth : 12;
       for (let month = 1; month <= endMonth; month++) {
+        // eslint-disable-next-line no-useless-assignment
         let solvedThisMonth = 0;
         
         // Model general solved problems per month
@@ -173,7 +174,7 @@ export default function App() {
     return () => {
       document.head.removeChild(script);
     };
-  }, []);
+  }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const xAxisTicks = useMemo(() => {
     return data.filter(d => d.month === 1).map(d => d.dateStr);
