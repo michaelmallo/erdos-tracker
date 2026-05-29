@@ -10,6 +10,8 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [viewMode, setViewMode] = useState('burnup');
+  const [currentView, setCurrentView] = useState('home'); // 'home', 'total', 'solved', 'open', 'aiAssisted'
+  const [problems, setProblems] = useState([]); // Store raw problems data
 
   // Pull-to-refresh states
   const [startY, setStartY] = useState(0);
@@ -21,6 +23,9 @@ export default function App() {
     if (!Array.isArray(problems)) {
       throw new Error("Invalid data format received.");
     }
+
+    // Store raw problems data for the table view
+    setProblems(problems);
 
     let total = problems.length;
     let provedCount = 0;
@@ -227,6 +232,11 @@ export default function App() {
     );
   }
 
+  // Show problem table view if selected
+  if (currentView !== 'home') {
+    return <ProblemTable problems={problems} view={currentView} onBack={() => setCurrentView('home')} />;
+  }
+
   return (
     <div 
       className="h-screen w-screen overflow-y-auto md:overflow-hidden bg-slate-50 text-slate-800 font-sans flex flex-col [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
@@ -284,6 +294,7 @@ export default function App() {
             icon={<BookOpen className="w-4 h-4 md:w-6 md:h-6 text-slate-700" />} 
             color="border-slate-200"
             valueColor="text-slate-700"
+            onClick={() => setCurrentView('total')}
           />
           <StatCard 
             title="Solved / Resolved" 
@@ -291,6 +302,7 @@ export default function App() {
             icon={<CheckCircle className="w-4 h-4 md:w-6 md:h-6 text-emerald-600" />} 
             color="border-emerald-200 bg-emerald-50/30"
             valueColor="text-emerald-600"
+            onClick={() => setCurrentView('solved')}
           />
           <StatCard 
             title="Remaining Open" 
@@ -298,6 +310,7 @@ export default function App() {
             icon={<Activity className="w-4 h-4 md:w-6 md:h-6 text-amber-600" />} 
             color="border-amber-200 bg-amber-50/30"
             valueColor="text-amber-600"
+            onClick={() => setCurrentView('open')}
           />
           <StatCard 
             title="Lean Assisted" 
@@ -305,6 +318,7 @@ export default function App() {
             icon={<BrainCircuit className="w-4 h-4 md:w-6 md:h-6 text-indigo-700" />} 
             color="border-indigo-200 bg-indigo-50/30"
             valueColor="text-indigo-700"
+            onClick={() => setCurrentView('aiAssisted')}
           />
         </div>
 
@@ -398,6 +412,125 @@ export default function App() {
   );
 }
 
+// Problem table component for viewing problems by category
+function ProblemTable({ problems, view, onBack }) {
+  const getFilteredProblems = () => {
+    if (!Array.isArray(problems)) return [];
+
+    return problems.filter(p => {
+      const statusState = p.status?.state ? String(p.status.state).toLowerCase() : 'open';
+      
+      switch (view) {
+        case 'solved':
+          return statusState.includes('proved') || statusState.includes('disproved') || 
+                 statusState.includes('solved') || statusState.includes('not provable') || 
+                 statusState.includes('not disprovable');
+        case 'open':
+          return !statusState.includes('proved') && !statusState.includes('disproved') && 
+                 !statusState.includes('solved') && !statusState.includes('not provable') && 
+                 !statusState.includes('not disprovable');
+        case 'aiAssisted':
+          return statusState.includes('(lean)');
+        case 'total':
+        default:
+          return true;
+      }
+    });
+  };
+
+  const getViewTitle = () => {
+    const titles = {
+      total: 'All Erdős Problems',
+      solved: 'Solved / Resolved Problems',
+      open: 'Open Problems',
+      aiAssisted: 'Lean Assisted Problems'
+    };
+    return titles[view] || 'Problems';
+  };
+
+  const filteredProblems = getFilteredProblems();
+
+  return (
+    <div className="h-screen w-screen overflow-hidden bg-slate-50 text-slate-800 font-sans flex flex-col">
+      {/* Header */}
+      <div className="bg-white border-b border-slate-200 p-4 md:p-6 shadow-sm">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-slate-900">
+              {getViewTitle()}
+            </h1>
+            <p className="text-slate-500 text-sm mt-1">
+              {filteredProblems.length} problem{filteredProblems.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+          <button
+            onClick={onBack}
+            className="px-4 py-2 md:px-6 md:py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2 whitespace-nowrap"
+          >
+            ← Back to Dashboard
+          </button>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="flex-1 overflow-auto">
+        <div className="max-w-7xl mx-auto w-full p-4 md:p-6">
+          <div className="bg-white rounded-lg shadow-sm border border-slate-100 overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Number</th>
+                  <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Name</th>
+                  <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Description</th>
+                  <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Last Updated</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                {filteredProblems.length > 0 ? (
+                  filteredProblems.map((problem, index) => (
+                    <tr key={index} className="hover:bg-slate-50 transition-colors duration-100">
+                      <td className="px-4 py-3 text-sm text-slate-700 font-medium">
+                        {problem.number || problem.id || '-'}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-700 font-medium max-w-xs truncate">
+                        {problem.name || problem.title || '-'}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-600 max-w-md truncate">
+                        {problem.description || '-'}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                          (problem.status?.state || 'open').toLowerCase().includes('proved') 
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : (problem.status?.state || 'open').toLowerCase().includes('open')
+                            ? 'bg-amber-100 text-amber-700'
+                            : 'bg-slate-100 text-slate-700'
+                        }`}>
+                          {problem.status?.state || 'Open'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-600">
+                        {problem.status?.date ? new Date(problem.status.date).toLocaleDateString() : '-'}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="px-4 py-8 text-center text-slate-500">
+                      No problems found in this category.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Custom tooltip component for the chart
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
@@ -433,9 +566,12 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 // Reusable stat card component
-function StatCard({ title, value, icon, color, valueColor = "text-slate-800", subtitle }) {
+function StatCard({ title, value, icon, color, valueColor = "text-slate-800", subtitle, onClick }) {
   return (
-    <div className={`p-2 md:p-4 rounded-xl border ${color} bg-white shadow-sm flex flex-col justify-between`}>
+    <button 
+      onClick={onClick}
+      className={`p-2 md:p-4 rounded-xl border ${color} bg-white shadow-sm flex flex-col justify-between transition-all duration-200 hover:shadow-md hover:border-opacity-75 active:scale-95 cursor-pointer`}
+    >
       <div className="flex justify-between items-start mb-1 md:mb-2 gap-1">
         <h3 className="text-[10px] md:text-sm font-semibold text-slate-500 uppercase tracking-wider leading-tight">{title}</h3>
         <div className="shrink-0">{icon}</div>
@@ -444,6 +580,6 @@ function StatCard({ title, value, icon, color, valueColor = "text-slate-800", su
         <div className={`text-lg md:text-3xl font-extrabold ${valueColor}`}>{value}</div>
         {subtitle && <div className="text-[10px] md:text-xs font-medium text-slate-500 mt-1">{subtitle}</div>}
       </div>
-    </div>
+    </button>
   );
 }
