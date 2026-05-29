@@ -339,7 +339,7 @@ export default function App() {
 
         {/* Chart Area */}
         <div className="bg-white p-2 md:p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col flex-1 min-h-[400px] md:min-h-0">
-          <div className="mb-2 md:mb-4 flex flex-col md:flex-row md:items-start justify-between gap-2 md:gap-4 shrink-0">
+          <div className="mb-1 md:mb-4 flex flex-col md:flex-row md:items-start justify-between gap-1 md:gap-4 shrink-0">
             <div>
               <h2 className="text-xl font-bold text-slate-800">
                 {viewMode === 'burnup' ? 'Cumulative Problems Solved' : 'Remaining Open Problems'}
@@ -347,17 +347,17 @@ export default function App() {
             </div>
             
             {/* Toggle Widget */}
-            <div className="flex bg-slate-100 p-1 rounded-lg w-full sm:w-max shadow-inner mt-2 md:mt-0 shrink-0">
+            <div className="flex bg-slate-100 p-1 rounded-lg w-full sm:w-max shadow-inner mt-1 md:mt-0 shrink-0">
               <button 
                 onClick={() => setViewMode('burnup')} 
-                className={`flex-1 sm:flex-none justify-center px-2 py-1.5 md:px-4 md:py-2 rounded-md text-xs md:text-sm font-bold transition-all duration-200 flex items-center gap-1 md:gap-2 ${viewMode === 'burnup' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`flex-1 sm:flex-none justify-center px-2 py-1 md:px-4 md:py-2 rounded-md text-xs md:text-sm font-bold transition-all duration-200 flex items-center gap-1 md:gap-2 ${viewMode === 'burnup' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
               >
                 <CheckCircle className={`w-3.5 h-3.5 md:w-4 md:h-4 ${viewMode === 'burnup' ? 'text-emerald-500' : ''}`} />
                 Burn-up (Solved)
               </button>
               <button 
                 onClick={() => setViewMode('burndown')} 
-                className={`flex-1 sm:flex-none justify-center px-2 py-1.5 md:px-4 md:py-2 rounded-md text-xs md:text-sm font-bold transition-all duration-200 flex items-center gap-1 md:gap-2 ${viewMode === 'burndown' ? 'bg-amber-500 shadow-sm text-white' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`flex-1 sm:flex-none justify-center px-2 py-1 md:px-4 md:py-2 rounded-md text-xs md:text-sm font-bold transition-all duration-200 flex items-center gap-1 md:gap-2 ${viewMode === 'burndown' ? 'bg-amber-500 shadow-sm text-white' : 'text-slate-500 hover:text-slate-700'}`}
               >
                 <Activity className={`w-3.5 h-3.5 md:w-4 md:h-4 ${viewMode === 'burndown' ? '' : 'text-amber-500'}`} />
                 Burn-down (Open)
