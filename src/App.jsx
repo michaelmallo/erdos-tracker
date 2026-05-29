@@ -414,9 +414,6 @@ export default function App() {
 
 // Problem table component for viewing problems by category
 function ProblemTable({ problems, view, onBack }) {
-  const [descriptions, setDescriptions] = useState({});
-  const [loadingDescriptions, setLoadingDescriptions] = useState(true);
-
   const getFilteredProblems = () => {
     if (!Array.isArray(problems)) return [];
 
@@ -441,102 +438,6 @@ function ProblemTable({ problems, view, onBack }) {
     });
   };
 
-  // Fetch descriptions from problem pages
-  useEffect(() => {
-    const filteredProblems = getFilteredProblems();
-    setLoadingDescriptions(true);
-
-    const fetchProblemPageHtml = async (problemId) => {
-      const proxies = [
-        (id) => `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://www.erdosproblems.com/${id}`)}`,
-        (id) => `https://thingproxy.freeboard.io/fetch/https://www.erdosproblems.com/${id}`,
-        (id) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(`https://www.erdosproblems.com/${id}`)}`
-      ];
-
-      for (const buildUrl of proxies) {
-        try {
-          const response = await fetch(buildUrl(problemId));
-          if (response.ok) {
-            return await response.text();
-          }
-        } catch (err) {
-          console.warn(`Proxy fetch failed for problem ${problemId}:`, err);
-        }
-      }
-
-      return null;
-    };
-
-    const fetchDescriptions = async () => {
-      const descMap = {};
-      const BATCH_SIZE = 3; // Fetch 3 at a time to avoid overwhelming the server
-      const DELAY = 500; // 500ms delay between batches
-      
-      // Load cached descriptions first
-      try {
-        const cached = localStorage.getItem('erdos_descriptions');
-        if (cached) {
-          Object.assign(descMap, JSON.parse(cached));
-        }
-      } catch (err) {
-        console.warn('Failed to load cached descriptions:', err);
-      }
-
-      // Fetch only missing descriptions in batches
-      const problemsToFetch = filteredProblems.filter(p => {
-        const id = p.number || p.id;
-        return id && !descMap[id];
-      });
-
-      for (let i = 0; i < problemsToFetch.length; i += BATCH_SIZE) {
-        const batch = problemsToFetch.slice(i, i + BATCH_SIZE);
-        
-        const batchPromises = batch.map(async (problem) => {
-          const problemId = problem.number || problem.id;
-          if (!problemId) return;
-
-          try {
-            const html = await fetchProblemPageHtml(problemId);
-            if (html) {
-              const parser = new DOMParser();
-              const doc = parser.parseFromString(html, 'text/html');
-              const problemTextDiv = doc.querySelector('.problem-text .content');
-              if (problemTextDiv) {
-                const text = problemTextDiv.textContent.trim();
-                if (text && text.length > 0) {
-                  descMap[problemId] = text;
-                }
-              }
-            }
-          } catch (err) {
-            console.error(`Failed to fetch description for problem ${problemId}:`, err);
-          }
-        });
-
-        await Promise.all(batchPromises);
-        
-        // Update state after each batch
-        setDescriptions(Object.assign({}, descMap));
-
-        // Add delay between batches (except after the last one)
-        if (i + BATCH_SIZE < problemsToFetch.length) {
-          await new Promise(resolve => setTimeout(resolve, DELAY));
-        }
-      }
-
-      // Cache the descriptions
-      try {
-        localStorage.setItem('erdos_descriptions', JSON.stringify(descMap));
-      } catch (err) {
-        console.warn('Failed to cache descriptions:', err);
-      }
-
-      setLoadingDescriptions(false);
-    };
-
-    fetchDescriptions();
-  }, [view, problems]);
-
   const getViewTitle = () => {
     const titles = {
       total: 'All Erdős Problems',
@@ -560,7 +461,6 @@ function ProblemTable({ problems, view, onBack }) {
             </h1>
             <p className="text-slate-500 text-sm mt-1">
               {filteredProblems.length} problem{filteredProblems.length !== 1 ? 's' : ''}
-              {loadingDescriptions && ' (loading descriptions...)'}
             </p>
           </div>
           <button
@@ -581,7 +481,6 @@ function ProblemTable({ problems, view, onBack }) {
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Number</th>
-                    <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Description</th>
                     <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Status</th>
                     <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Last Updated</th>
                   </tr>
@@ -606,9 +505,6 @@ function ProblemTable({ problems, view, onBack }) {
                               '-'
                             )}
                           </td>
-                          <td className="px-4 py-3 text-sm text-slate-600 max-w-2xl truncate">
-                            {descriptions[problemId] || (loadingDescriptions ? 'Loading...' : '-')}
-                          </td>
                           <td className="px-4 py-3 text-sm">
                             <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
                               (problem.status?.state || 'open').toLowerCase().includes('proved') 
@@ -628,7 +524,7 @@ function ProblemTable({ problems, view, onBack }) {
                     })
                   ) : (
                     <tr>
-                      <td colSpan="4" className="px-4 py-8 text-center text-slate-500">
+                      <td colSpan="3" className="px-4 py-8 text-center text-slate-500">
                         No problems found in this category.
                       </td>
                     </tr>
