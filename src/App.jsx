@@ -473,57 +473,59 @@ function ProblemTable({ problems, view, onBack }) {
       </div>
 
       {/* Table */}
-      <div className="flex-1 overflow-auto">
-        <div className="max-w-7xl mx-auto w-full p-4 md:p-6">
-          <div className="bg-white rounded-lg shadow-sm border border-slate-100 overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-slate-50 border-b border-slate-200">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Number</th>
-                  <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Name</th>
-                  <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Description</th>
-                  <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Last Updated</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {filteredProblems.length > 0 ? (
-                  filteredProblems.map((problem, index) => (
-                    <tr key={index} className="hover:bg-slate-50 transition-colors duration-100">
-                      <td className="px-4 py-3 text-sm text-slate-700 font-medium">
-                        {problem.number || problem.id || '-'}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-700 font-medium max-w-xs truncate">
-                        {problem.name || problem.title || '-'}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-600 max-w-md truncate">
-                        {problem.description || '-'}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                          (problem.status?.state || 'open').toLowerCase().includes('proved') 
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : (problem.status?.state || 'open').toLowerCase().includes('open')
-                            ? 'bg-amber-100 text-amber-700'
-                            : 'bg-slate-100 text-slate-700'
-                        }`}>
-                          {problem.status?.state || 'Open'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-600">
-                        {problem.status?.date ? new Date(problem.status.date).toLocaleDateString() : '-'}
+      <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="flex-1 overflow-auto">
+          <div className="max-w-7xl mx-auto w-full p-4 md:p-6">
+            <div className="bg-white rounded-lg shadow-sm border border-slate-100 overflow-x-auto">
+              <table className="w-full min-w-max md:min-w-0">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Number</th>
+                    <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Name</th>
+                    <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Description</th>
+                    <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Status</th>
+                    <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Last Updated</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {filteredProblems.length > 0 ? (
+                    filteredProblems.map((problem, index) => (
+                      <tr key={index} className="hover:bg-slate-50 transition-colors duration-100">
+                        <td className="px-4 py-3 text-sm text-slate-700 font-medium">
+                          {problem.number || problem.id || '-'}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-700 font-medium max-w-xs truncate">
+                          {problem.name || problem.title || '-'}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-600 max-w-md truncate">
+                          {problem.description || '-'}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            (problem.status?.state || 'open').toLowerCase().includes('proved') 
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : (problem.status?.state || 'open').toLowerCase().includes('open')
+                              ? 'bg-amber-100 text-amber-700'
+                              : 'bg-slate-100 text-slate-700'
+                          }`}>
+                            {problem.status?.state || 'Open'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-600">
+                          {problem.status?.last_update ? new Date(problem.status.last_update).toLocaleDateString() : '-'}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="5" className="px-4 py-8 text-center text-slate-500">
+                        No problems found in this category.
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="5" className="px-4 py-8 text-center text-slate-500">
-                      No problems found in this category.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
