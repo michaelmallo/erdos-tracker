@@ -482,6 +482,7 @@ function ProblemTable({ problems, view, onBack }) {
                   <tr>
                     <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Number</th>
                     <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Status</th>
+                    <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Tags</th>
                     <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Last Updated</th>
                   </tr>
                 </thead>
@@ -489,6 +490,7 @@ function ProblemTable({ problems, view, onBack }) {
                   {filteredProblems.length > 0 ? (
                     filteredProblems.map((problem, index) => {
                       const problemId = problem.number || problem.id;
+                      const tags = Array.isArray(problem.tags) ? problem.tags : [];
                       return (
                         <tr key={index} className="hover:bg-slate-50 transition-colors duration-100">
                           <td className="px-4 py-3 text-sm text-slate-700 font-medium">
@@ -517,6 +519,19 @@ function ProblemTable({ problems, view, onBack }) {
                             </span>
                           </td>
                           <td className="px-4 py-3 text-sm text-slate-600">
+                            {tags.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                {tags.map((tag, tagIndex) => (
+                                  <span key={tagIndex} className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-100 text-[11px] font-medium text-slate-700">
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              '-'
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-slate-600">
                             {problem.status?.last_update ? new Date(problem.status.last_update).toLocaleDateString() : '-'}
                           </td>
                         </tr>
@@ -524,7 +539,7 @@ function ProblemTable({ problems, view, onBack }) {
                     })
                   ) : (
                     <tr>
-                      <td colSpan="3" className="px-4 py-8 text-center text-slate-500">
+                      <td colSpan="4" className="px-4 py-8 text-center text-slate-500">
                         No problems found in this category.
                       </td>
                     </tr>
