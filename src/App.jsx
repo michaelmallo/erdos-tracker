@@ -414,6 +414,9 @@ export default function App() {
 
 // Problem table component for viewing problems by category
 function ProblemTable({ problems, view, onBack }) {
+  const [sortColumn, setSortColumn] = useState(null);
+  const [sortDirection, setSortDirection] = useState('asc');
+
   const getFilteredProblems = () => {
     if (!Array.isArray(problems)) return [];
 
