@@ -441,6 +441,60 @@ function ProblemTable({ problems, view, onBack }) {
     });
   };
 
+  const sortProblems = (items = []) => {
+    if (!sortColumn) return items;
+
+    return [...items].sort((a, b) => {
+      const getSortValue = (problem) => {
+        if (sortColumn === 'number') {
+          const problemNumber = problem.number ?? problem.id;
+          const numValue = Number(problemNumber);
+          return Number.isFinite(numValue)
+            ? numValue
+            : String(problemNumber || '').toLowerCase();
+        }
+
+        if (sortColumn === 'status') {
+          return String(problem.status?.state || 'open').toLowerCase();
+        }
+
+        if (sortColumn === 'lastUpdated') {
+          if (!problem.status?.last_update) {
+            return sortDirection === 'asc' ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY;
+          }
+          const dateValue = new Date(problem.status.last_update).getTime();
+          return Number.isFinite(dateValue) ? dateValue : (sortDirection === 'asc' ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY);
+        }
+
+        return '';
+      };
+
+      const first = getSortValue(a);
+      const second = getSortValue(b);
+
+      if (first === second) {
+        return 0;
+      }
+
+      if (typeof first === 'number' && typeof second === 'number') {
+        return sortDirection === 'asc' ? first - second : second - first;
+      }
+
+      return sortDirection === 'asc'
+        ? String(first).localeCompare(String(second), undefined, { numeric: true, sensitivity: 'base' })
+        : String(second).localeCompare(String(first), undefined, { numeric: true, sensitivity: 'base' });
+    });
+  };
+
+  const handleSort = (column) => {
+    if (sortColumn === column) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
   const getViewTitle = () => {
     const titles = {
       total: 'All Erdős Problems',
@@ -452,6 +506,7 @@ function ProblemTable({ problems, view, onBack }) {
   };
 
   const filteredProblems = getFilteredProblems();
+  const sortedProblems = sortProblems(filteredProblems);
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-slate-50 text-slate-800 font-sans flex flex-col">
@@ -483,15 +538,45 @@ function ProblemTable({ problems, view, onBack }) {
               <table className="w-full min-w-max md:min-w-0">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Number</th>
-                    <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Status</th>
+                    <th
+                      className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider cursor-pointer"
+                      onClick={() => handleSort('number')}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        Number
+                        {sortColumn === 'number' && (
+                          <span className="text-slate-400">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                        )}
+                      </span>
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider cursor-pointer"
+                      onClick={() => handleSort('status')}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        Status
+                        {sortColumn === 'status' && (
+                          <span className="text-slate-400">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                        )}
+                      </span>
+                    </th>
                     <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Tags</th>
-                    <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Last Updated</th>
+                    <th
+                      className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider cursor-pointer"
+                      onClick={() => handleSort('lastUpdated')}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        Last Updated
+                        {sortColumn === 'lastUpdated' && (
+                          <span className="text-slate-400">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                        )}
+                      </span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                  {filteredProblems.length > 0 ? (
-                    filteredProblems.map((problem, index) => {
+                  {sortedProblems.length > 0 ? (
+                    sortedProblems.map((problem, index) => {
                       const problemId = problem.number || problem.id;
                       const tags = Array.isArray(problem.tags) ? problem.tags : [];
                       return (
