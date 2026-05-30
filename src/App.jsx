@@ -367,7 +367,7 @@ export default function App() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis 
+                <XAxis
                   dataKey="dateStr" 
                   ticks={xAxisTicks}
                   tickFormatter={(val) => val?.split('-')[0]}
@@ -377,7 +377,7 @@ export default function App() {
                   tickMargin={10}
                   minTickGap={20}
                 />
-                <YAxis 
+                <YAxis
                   axisLine={false}
                   tickLine={false}
                   tick={{ fill: '#64748b', fontSize: 12 }}
@@ -416,13 +416,42 @@ export default function App() {
 function ProblemTable({ problems, view, onBack }) {
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState('asc');
+  const [filters, setFilters] = useState({
+    number: '',
+    status: '',
+    lastUpdated: '',
+    tags: ''
+  });
+
+  const handleFilterChange = (field, value) => {
+    setFilters(prev => ({ ...prev, [field]: value }));
+  };
 
   const getFilteredProblems = () => {
     if (!Array.isArray(problems)) return [];
 
     return problems.filter(p => {
       const statusState = p.status?.state ? String(p.status.state).toLowerCase() : 'open';
-      
+      const problemNumber = String(p.number ?? p.id ?? '').toLowerCase();
+      const lastUpdated = p.status?.last_update ? new Date(p.status.last_update).toLocaleDateString() : '';
+      const tagList = Array.isArray(p.tags) ? p.tags.join(' ').toLowerCase() : '';
+
+      if (filters.number && !problemNumber.includes(filters.number.toLowerCase())) {
+        return false;
+      }
+
+      if (filters.status && !statusState.includes(filters.status.toLowerCase())) {
+        return false;
+      }
+
+      if (filters.lastUpdated && !lastUpdated.toLowerCase().includes(filters.lastUpdated.toLowerCase())) {
+        return false;
+      }
+
+      if (filters.tags && !tagList.includes(filters.tags.toLowerCase())) {
+        return false;
+      }
+
       switch (view) {
         case 'solved':
           return statusState.includes('proved') || statusState.includes('disproved') || 
@@ -560,7 +589,6 @@ function ProblemTable({ problems, view, onBack }) {
                         )}
                       </span>
                     </th>
-                    <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Tags</th>
                     <th
                       className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider cursor-pointer"
                       onClick={() => handleSort('lastUpdated')}
@@ -571,6 +599,41 @@ function ProblemTable({ problems, view, onBack }) {
                           <span className="text-slate-400">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                         )}
                       </span>
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Tags</th>
+                  </tr>
+                  <tr className="bg-slate-100">
+                    <th className="px-4 py-2 text-left text-xs md:text-sm text-slate-500">
+                      <input
+                        value={filters.number}
+                        onChange={(e) => handleFilterChange('number', e.target.value)}
+                        placeholder="Filter number"
+                        className="w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-slate-700 text-xs md:text-sm focus:border-blue-500 focus:outline-none"
+                      />
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs md:text-sm text-slate-500">
+                      <input
+                        value={filters.status}
+                        onChange={(e) => handleFilterChange('status', e.target.value)}
+                        placeholder="Filter status"
+                        className="w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-slate-700 text-xs md:text-sm focus:border-blue-500 focus:outline-none"
+                      />
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs md:text-sm text-slate-500">
+                      <input
+                        value={filters.lastUpdated}
+                        onChange={(e) => handleFilterChange('lastUpdated', e.target.value)}
+                        placeholder="Filter date"
+                        className="w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-slate-700 text-xs md:text-sm focus:border-blue-500 focus:outline-none"
+                      />
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs md:text-sm text-slate-500">
+                      <input
+                        value={filters.tags}
+                        onChange={(e) => handleFilterChange('tags', e.target.value)}
+                        placeholder="Filter tags"
+                        className="w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-slate-700 text-xs md:text-sm focus:border-blue-500 focus:outline-none"
+                      />
                     </th>
                   </tr>
                 </thead>
@@ -607,6 +670,9 @@ function ProblemTable({ problems, view, onBack }) {
                             </span>
                           </td>
                           <td className="px-4 py-3 text-sm text-slate-600">
+                            {problem.status?.last_update ? new Date(problem.status.last_update).toLocaleDateString() : '-'}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-slate-600">
                             {tags.length > 0 ? (
                               <div className="flex flex-wrap gap-1">
                                 {tags.map((tag, tagIndex) => (
@@ -618,9 +684,6 @@ function ProblemTable({ problems, view, onBack }) {
                             ) : (
                               '-'
                             )}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-slate-600">
-                            {problem.status?.last_update ? new Date(problem.status.last_update).toLocaleDateString() : '-'}
                           </td>
                         </tr>
                       );
