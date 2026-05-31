@@ -416,57 +416,241 @@ export default function App() {
 function ProblemTable({ problems, view, onBack }) {
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState('asc');
-  const [filters, setFilters] = useState({
-    number: '',
-    status: '',
-    lastUpdated: '',
-    tags: ''
-  });
+  const [numberFilter, setNumberFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState([]);
+  const [statusInitialized, setStatusInitialized] = useState(false);
+  const [dateSelections, setDateSelections] = useState([]);
+  const [dateFilterExpr, setDateFilterExpr] = useState('');
+  const [dateInitialized, setDateInitialized] = useState(false);
+  const [tagFilter, setTagFilter] = useState([]);
+  const [tagsInitialized, setTagsInitialized] = useState(false);
 
-  const handleFilterChange = (field, value) => {
-    setFilters(prev => ({ ...prev, [field]: value }));
+  const parseNumberFilter = (value) => {
+    const raw = value.trim();
+    if (!raw) return null;
+
+    const parts = raw.split(',').map(part => part.trim()).filter(Boolean);
+    const conditions = parts.map(part => {
+      const inequalityMatch = part.match(/^([<>]=?)\s*(-?\d+)$/);
+      if (inequalityMatch) {
+        return { type: 'inequality', op: inequalityMatch[1], value: Number(inequalityMatch[2]) };
+      }
+
+      const rangeMatch = part.match(/^(-?\d+)\s*[-–]\s*(-?\d+)$/);
+      if (rangeMatch) {
+        return {
+          type: 'range',
+          min: Number(rangeMatch[1]),
+          max: Number(rangeMatch[2])
+        };
+      }
+
+      const exactValue = Number(part);
+      if (!Number.isNaN(exactValue)) {
+        return { type: 'exact', value: exactValue };
+      }
+
+      return null;
+    }).filter(Boolean);
+
+    return conditions.length ? conditions : null;
+  };
+
+  const matchesNumberFilter = (problemNumber) => {
+    const rawFilter = numberFilter.trim();
+    if (!rawFilter) return true;
+
+    const conditions = parseNumberFilter(rawFilter);
+    const normalizedProblemNumber = Number(problemNumber);
+
+    if (conditions) {
+      if (!Number.isFinite(normalizedProblemNumber)) return false;
+      return conditions.some(condition => {
+        if (condition.type === 'exact') {
+          return normalizedProblemNumber === condition.value;
+        }
+        if (condition.type === 'inequality') {
+          if (condition.op === '<') return normalizedProblemNumber < condition.value;
+          if (condition.op === '<=') return normalizedProblemNumber <= condition.value;
+          if (condition.op === '>') return normalizedProblemNumber > condition.value;
+          if (condition.op === '>=') return normalizedProblemNumber >= condition.value;
+        }
+        if (condition.type === 'range') {
+          return normalizedProblemNumber >= condition.min && normalizedProblemNumber <= condition.max;
+        }
+        return false;
+      });
+    }
+
+    return String(problemNumber).toLowerCase().includes(rawFilter.toLowerCase());
+  };
+
+  const parseDateFilter = (value) => {
+    const raw = value.trim();
+    if (!raw) return null;
+
+    const inequalityMatch = raw.match(/^([<>]=?)\s*(.+)$/);
+    if (inequalityMatch) {
+      const dateValue = new Date(inequalityMatch[2]);
+      return Number.isNaN(dateValue.getTime()) ? null : {
+        type: 'inequality',
+        op: inequalityMatch[1],
+        value: dateValue.getTime()
+      };
+    }
+
+    const rangeMatch = raw.match(/^(.+)\s*[-–]\s*(.+)$/);
+    if (rangeMatch) {
+      const start = new Date(rangeMatch[1]);
+      const end = new Date(rangeMatch[2]);
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
+      return {
+        type: 'range',
+        min: Math.min(start.getTime(), end.getTime()),
+        max: Math.max(start.getTime(), end.getTime())
+      };
+    }
+
+    return null;
+  };
+
+  const matchesDateFilter = (date, label) => {
+    const selectedDates = dateSelections;
+    const expr = dateFilterExpr.trim();
+    const hasSelections = selectedDates.length > 0;
+    const hasExpr = expr.length > 0;
+
+    if (!hasSelections && !hasExpr) return true;
+    const exactMatch = hasSelections && label && selectedDates.includes(label);
+    let exprMatch = false;
+
+    if (hasExpr) {
+      const condition = parseDateFilter(expr);
+      if (condition && date) {
+        if (condition.type === 'inequality') {
+          if (condition.op === '<') exprMatch = date.getTime() < condition.value;
+          if (condition.op === '<=') exprMatch = date.getTime() <= condition.value;
+          if (condition.op === '>') exprMatch = date.getTime() > condition.value;
+          if (condition.op === '>=') exprMatch = date.getTime() >= condition.value;
+        }
+        if (condition.type === 'range') {
+          exprMatch = date.getTime() >= condition.min && date.getTime() <= condition.max;
+        }
+      }
+    }
+
+    if (hasSelections && hasExpr) {
+      return exactMatch || exprMatch;
+    }
+
+    if (hasSelections) {
+      return exactMatch;
+    }
+
+    return exprMatch;
+  };
+
+  const matchesView = (p) => {
+    const statusState = p.status?.state ? String(p.status.state).toLowerCase() : 'open';
+
+    switch (view) {
+      case 'solved':
+        return statusState.includes('proved') || statusState.includes('disproved') ||
+               statusState.includes('solved') || statusState.includes('not provable') ||
+               statusState.includes('not disprovable');
+      case 'open':
+        return !statusState.includes('proved') && !statusState.includes('disproved') &&
+               !statusState.includes('solved') && !statusState.includes('not provable') &&
+               !statusState.includes('not disprovable');
+      case 'aiAssisted':
+        return statusState.includes('(lean)');
+      case 'total':
+      default:
+        return true;
+    }
+  };
+
+  const viewProblems = useMemo(() => {
+    if (!Array.isArray(problems)) return [];
+    return problems.filter(matchesView);
+  }, [problems, view]);
+
+  const statusOptions = useMemo(() => {
+    return [...new Set(viewProblems.map(p => String(p.status?.state || 'Open')))].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  }, [viewProblems]);
+
+  const lastUpdatedOptions = useMemo(() => {
+    const dates = viewProblems
+      .map(p => p.status?.last_update)
+      .filter(Boolean)
+      .map(raw => new Date(raw))
+      .filter(date => !Number.isNaN(date.getTime()))
+      .map(date => date.toLocaleDateString());
+
+    return [...new Set(dates)].sort((a, b) => new Date(a) - new Date(b));
+  }, [viewProblems]);
+
+  const tagOptions = useMemo(() => {
+    return [...new Set(viewProblems.flatMap(p => Array.isArray(p.tags) ? p.tags : []))].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  }, [viewProblems]);
+
+  useEffect(() => {
+    if (!statusInitialized && statusOptions.length > 0) {
+      setStatusFilter(statusOptions);
+      setStatusInitialized(true);
+    }
+
+    if (!dateInitialized && lastUpdatedOptions.length > 0) {
+      setDateSelections(lastUpdatedOptions);
+      setDateInitialized(true);
+    }
+
+    if (!tagsInitialized && tagOptions.length > 0) {
+      setTagFilter(tagOptions);
+      setTagsInitialized(true);
+    }
+  }, [statusOptions, lastUpdatedOptions, tagOptions, statusInitialized, dateInitialized, tagsInitialized]);
+
+  const toggleSelection = (value, values, setValues) => {
+    if (values.includes(value)) {
+      setValues(values.filter(item => item !== value));
+    } else {
+      setValues([...values, value]);
+    }
   };
 
   const getFilteredProblems = () => {
     if (!Array.isArray(problems)) return [];
 
-    return problems.filter(p => {
-      const statusState = p.status?.state ? String(p.status.state).toLowerCase() : 'open';
-      const problemNumber = String(p.number ?? p.id ?? '').toLowerCase();
-      const lastUpdated = p.status?.last_update ? new Date(p.status.last_update).toLocaleDateString() : '';
-      const tagList = Array.isArray(p.tags) ? p.tags.join(' ').toLowerCase() : '';
+    return viewProblems.filter(p => {
+      const statusStateRaw = String(p.status?.state || 'Open');
+      const statusState = statusStateRaw.toLowerCase();
+      const problemNumberValue = p.number ?? p.id;
+      const problemNumberString = String(problemNumberValue || '');
+      const problemDate = p.status?.last_update ? new Date(p.status.last_update) : null;
+      const lastUpdatedLabel = problemDate ? problemDate.toLocaleDateString() : '';
+      const tagList = Array.isArray(p.tags) ? p.tags : [];
 
-      if (filters.number && !problemNumber.includes(filters.number.toLowerCase())) {
+      if (numberFilter && !matchesNumberFilter(problemNumberValue)) {
         return false;
       }
 
-      if (filters.status && !statusState.includes(filters.status.toLowerCase())) {
+      if (statusFilter.length > 0 && !statusFilter.includes(statusStateRaw)) {
         return false;
       }
 
-      if (filters.lastUpdated && !lastUpdated.toLowerCase().includes(filters.lastUpdated.toLowerCase())) {
+      if (!matchesDateFilter(problemDate, lastUpdatedLabel)) {
         return false;
       }
 
-      if (filters.tags && !tagList.includes(filters.tags.toLowerCase())) {
-        return false;
+      if (tagFilter.length > 0) {
+        const hasTag = tagList.some(tag => tagFilter.includes(tag));
+        if (!hasTag) {
+          return false;
+        }
       }
 
-      switch (view) {
-        case 'solved':
-          return statusState.includes('proved') || statusState.includes('disproved') || 
-                 statusState.includes('solved') || statusState.includes('not provable') || 
-                 statusState.includes('not disprovable');
-        case 'open':
-          return !statusState.includes('proved') && !statusState.includes('disproved') && 
-                 !statusState.includes('solved') && !statusState.includes('not provable') && 
-                 !statusState.includes('not disprovable');
-        case 'aiAssisted':
-          return statusState.includes('(lean)');
-        case 'total':
-        default:
-          return true;
-      }
+      return true;
     });
   };
 
@@ -603,37 +787,124 @@ function ProblemTable({ problems, view, onBack }) {
                     <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Tags</th>
                   </tr>
                   <tr className="bg-slate-100">
-                    <th className="px-4 py-2 text-left text-xs md:text-sm text-slate-500">
+                    <th className="px-4 py-2 align-top text-left text-xs md:text-sm text-slate-500">
                       <input
-                        value={filters.number}
-                        onChange={(e) => handleFilterChange('number', e.target.value)}
-                        placeholder="Filter number"
+                        value={numberFilter}
+                        onChange={(e) => setNumberFilter(e.target.value)}
+                        placeholder="Exact number, 5-10, >=20"
                         className="w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-slate-700 text-xs md:text-sm focus:border-blue-500 focus:outline-none"
                       />
                     </th>
-                    <th className="px-4 py-2 text-left text-xs md:text-sm text-slate-500">
-                      <input
-                        value={filters.status}
-                        onChange={(e) => handleFilterChange('status', e.target.value)}
-                        placeholder="Filter status"
-                        className="w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-slate-700 text-xs md:text-sm focus:border-blue-500 focus:outline-none"
-                      />
+                    <th className="px-4 py-2 align-top text-left text-xs md:text-sm text-slate-500">
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setStatusFilter(statusOptions)}
+                            className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                          >
+                            All
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setStatusFilter([])}
+                            className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                          >
+                            None
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-1 max-h-44 overflow-auto pr-1">
+                          {statusOptions.length > 0 ? statusOptions.map((value) => (
+                            <label key={value} className="inline-flex items-center gap-2 text-[11px] text-slate-700">
+                              <input
+                                type="checkbox"
+                                checked={statusFilter.includes(value)}
+                                onChange={() => toggleSelection(value, statusFilter, setStatusFilter)}
+                                className="h-4 w-4 rounded border-slate-300 text-blue-600"
+                              />
+                              {value}
+                            </label>
+                          )) : (
+                            <div className="text-[11px] text-slate-400">No statuses</div>
+                          )}
+                        </div>
+                      </div>
                     </th>
-                    <th className="px-4 py-2 text-left text-xs md:text-sm text-slate-500">
-                      <input
-                        value={filters.lastUpdated}
-                        onChange={(e) => handleFilterChange('lastUpdated', e.target.value)}
-                        placeholder="Filter date"
-                        className="w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-slate-700 text-xs md:text-sm focus:border-blue-500 focus:outline-none"
-                      />
+                    <th className="px-4 py-2 align-top text-left text-xs md:text-sm text-slate-500">
+                      <div className="space-y-2">
+                        <input
+                          value={dateFilterExpr}
+                          onChange={(e) => setDateFilterExpr(e.target.value)}
+                          placeholder="<= 1/1/2025 or 2024-01-01 - 2024-06-01"
+                          className="w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-slate-700 text-xs md:text-sm focus:border-blue-500 focus:outline-none"
+                        />
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setDateSelections(lastUpdatedOptions)}
+                            className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                          >
+                            All
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDateSelections([])}
+                            className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                          >
+                            None
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-1 max-h-44 overflow-auto pr-1">
+                          {lastUpdatedOptions.length > 0 ? lastUpdatedOptions.map((value) => (
+                            <label key={value} className="inline-flex items-center gap-2 text-[11px] text-slate-700">
+                              <input
+                                type="checkbox"
+                                checked={dateSelections.includes(value)}
+                                onChange={() => toggleSelection(value, dateSelections, setDateSelections)}
+                                className="h-4 w-4 rounded border-slate-300 text-blue-600"
+                              />
+                              {value}
+                            </label>
+                          )) : (
+                            <div className="text-[11px] text-slate-400">No dates</div>
+                          )}
+                        </div>
+                      </div>
                     </th>
-                    <th className="px-4 py-2 text-left text-xs md:text-sm text-slate-500">
-                      <input
-                        value={filters.tags}
-                        onChange={(e) => handleFilterChange('tags', e.target.value)}
-                        placeholder="Filter tags"
-                        className="w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-slate-700 text-xs md:text-sm focus:border-blue-500 focus:outline-none"
-                      />
+                    <th className="px-4 py-2 align-top text-left text-xs md:text-sm text-slate-500">
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setTagFilter(tagOptions)}
+                            className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                          >
+                            All
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setTagFilter([])}
+                            className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                          >
+                            None
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-1 max-h-44 overflow-auto pr-1">
+                          {tagOptions.length > 0 ? tagOptions.map((value) => (
+                            <label key={value} className="inline-flex items-center gap-2 text-[11px] text-slate-700">
+                              <input
+                                type="checkbox"
+                                checked={tagFilter.includes(value)}
+                                onChange={() => toggleSelection(value, tagFilter, setTagFilter)}
+                                className="h-4 w-4 rounded border-slate-300 text-blue-600"
+                              />
+                              {value}
+                            </label>
+                          )) : (
+                            <div className="text-[11px] text-slate-400">No tags</div>
+                          )}
+                        </div>
+                      </div>
                     </th>
                   </tr>
                 </thead>
