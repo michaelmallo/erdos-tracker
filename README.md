@@ -2,6 +2,8 @@
 
 A frontend dashboard for tracking the status of problems from the Erdős problem dataset.
 
+This dashboard is hosted in GitHub Pages at [erdos-tracker](https://www.michaelmallo.github.io/erdos-tracker)
+
 This repository provides a React + Vite application that:
 
 - loads the public `teorth/erdosproblems` YAML dataset from GitHub
@@ -16,12 +18,11 @@ The app fetches raw YAML data from the Erdős problems repository and converts i
 
 Main features:
 
-- `StatCard` panels that show total problems, solved/resolved problems, open problems, and Lean-assisted problems
-- drill-down views for each category using the table view buttons
-- table sorting by `Number`, `Status`, and `Last Updated`
-- per-column filtering with dialog controls and spreadsheet-style expressions
-- `Number`, `Status`, `Last Updated`, and `Tags` columns reordered to a consistent layout
 - chart visualization for cumulative solved problems and remaining open problems
+- Clickable `StatCard` panels that show total problems, solved/resolved problems, open problems, and Lean-assisted problems
+- drill-down table views for each `StatCard` category
+- table sorting by `Number`, `Status`, and `Last Updated`
+- per-column table filtering with dialog controls and spreadsheet-style expressions
 
 ## How it works
 
@@ -39,7 +40,7 @@ The `ProblemTable` component handles:
 - populating filter option lists from live problem data
 - applying text expression overrides for date and number filters
 
-## Getting started
+## Getting started for developers
 
 Install dependencies and run the app locally:
 
