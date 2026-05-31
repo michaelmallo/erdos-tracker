@@ -886,24 +886,22 @@ function ProblemTable({ problems, view, onBack }) {
                           )}
                           {statusDialogOpen && (
                             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                              <div className="flex items-center justify-between gap-3">
-                                <h3 className="text-sm font-semibold text-slate-800">Status Filter</h3>
-                                <div className="flex flex-wrap gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => setStatusFilter(statusOptions)}
-                                    className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
-                                  >
-                                    All
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setStatusFilter([])}
-                                    className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
-                                  >
-                                    None
-                                  </button>
-                                </div>
+                              <h3 className="text-sm font-semibold text-slate-800">Status Filter</h3>
+                              <div className="mt-3 flex flex-wrap items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setStatusFilter(statusOptions)}
+                                  className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                                >
+                                  All
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setStatusFilter([])}
+                                  className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                                >
+                                  None
+                                </button>
                               </div>
                               <div className="mt-3 grid grid-cols-2 gap-2 max-h-52 overflow-auto pr-1">
                                 {statusOptions.length > 0 ? statusOptions.map((value) => (
@@ -924,25 +922,7 @@ function ProblemTable({ problems, view, onBack }) {
                           )}
                           {dateDialogOpen && (
                             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                              <div className="flex items-center justify-between gap-3">
-                                <h3 className="text-sm font-semibold text-slate-800">Last Updated Filter</h3>
-                                <div className="flex flex-wrap gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => setDateSelections(lastUpdatedOptions)}
-                                    className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
-                                  >
-                                    All
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setDateSelections([])}
-                                    className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
-                                  >
-                                    None
-                                  </button>
-                                </div>
-                              </div>
+                              <h3 className="text-sm font-semibold text-slate-800">Last Updated Filter</h3>
                               <input
                                 value={dateFilterExpr}
                                 onChange={(e) => setDateFilterExpr(e.target.value)}
@@ -950,6 +930,22 @@ function ProblemTable({ problems, view, onBack }) {
                                 className="mt-3 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-800 text-sm focus:border-blue-500 focus:outline-none"
                               />
                               <p className="mt-2 text-xs text-slate-500">Text expressions override checkbox selections.</p>
+                              <div className="mt-3 flex flex-wrap items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setDateSelections(lastUpdatedOptions)}
+                                  className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                                >
+                                  All
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setDateSelections([])}
+                                  className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                                >
+                                  None
+                                </button>
+                              </div>
                               <div className="mt-3 grid grid-cols-2 gap-2 max-h-52 overflow-auto pr-1">
                                 {lastUpdatedOptions.length > 0 ? lastUpdatedOptions.map((value) => (
                                   <label key={value} className="inline-flex items-center gap-2 text-[11px] text-slate-700">
@@ -969,24 +965,22 @@ function ProblemTable({ problems, view, onBack }) {
                           )}
                           {tagDialogOpen && (
                             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                              <div className="flex items-center justify-between gap-3">
-                                <h3 className="text-sm font-semibold text-slate-800">Tags Filter</h3>
-                                <div className="flex flex-wrap gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => setTagFilter(tagOptions)}
-                                    className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
-                                  >
-                                    All
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setTagFilter([])}
-                                    className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
-                                  >
-                                    None
-                                  </button>
-                                </div>
+                              <h3 className="text-sm font-semibold text-slate-800">Tags Filter</h3>
+                              <div className="mt-3 flex flex-wrap items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setTagFilter(tagOptions)}
+                                  className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                                >
+                                  All
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setTagFilter([])}
+                                  className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                                >
+                                  None
+                                </button>
                               </div>
                               <div className="mt-3 grid grid-cols-2 gap-2 max-h-52 overflow-auto pr-1">
                                 {tagOptions.length > 0 ? tagOptions.map((value) => (
