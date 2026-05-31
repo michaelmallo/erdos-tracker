@@ -2,7 +2,7 @@
 
 A frontend dashboard for tracking the status of problems from the Erdős problem dataset.
 
-This dashboard is hosted in GitHub Pages at [erdos-tracker](https://www.michaelmallo.github.io/erdos-tracker)
+This dashboard is hosted in GitHub Pages at [erdos-tracker](https://michaelmallo.github.io/erdos-tracker)
 
 This repository provides a React + Vite application that:
 
