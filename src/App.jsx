@@ -417,13 +417,17 @@ function ProblemTable({ problems, view, onBack }) {
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState('asc');
   const [numberFilter, setNumberFilter] = useState('');
+  const [numberDialogOpen, setNumberDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState([]);
   const [statusInitialized, setStatusInitialized] = useState(false);
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [dateSelections, setDateSelections] = useState([]);
   const [dateFilterExpr, setDateFilterExpr] = useState('');
+  const [dateDialogOpen, setDateDialogOpen] = useState(false);
   const [dateInitialized, setDateInitialized] = useState(false);
   const [tagFilter, setTagFilter] = useState([]);
   const [tagsInitialized, setTagsInitialized] = useState(false);
+  const [tagDialogOpen, setTagDialogOpen] = useState(false);
 
   const parseNumberFilter = (value) => {
     const raw = value.trim();
@@ -485,21 +489,18 @@ function ProblemTable({ problems, view, onBack }) {
     return String(problemNumber).toLowerCase().includes(rawFilter.toLowerCase());
   };
 
-  const parseDateFilter = (value) => {
-    const raw = value.trim();
-    if (!raw) return null;
+  const parseDateCondition = (raw) => {
+    const value = raw.trim();
+    if (!value) return null;
 
-    const inequalityMatch = raw.match(/^([<>]=?)\s*(.+)$/);
+    const inequalityMatch = value.match(/^([<>]=?)\s*(.+)$/);
     if (inequalityMatch) {
       const dateValue = new Date(inequalityMatch[2]);
-      return Number.isNaN(dateValue.getTime()) ? null : {
-        type: 'inequality',
-        op: inequalityMatch[1],
-        value: dateValue.getTime()
-      };
+      if (Number.isNaN(dateValue.getTime())) return null;
+      return { type: 'inequality', op: inequalityMatch[1], value: dateValue.getTime() };
     }
 
-    const rangeMatch = raw.match(/^(.+)\s*[-–]\s*(.+)$/);
+    const rangeMatch = value.match(/^(.+)\s*[-–]\s*(.+)$/);
     if (rangeMatch) {
       const start = new Date(rangeMatch[1]);
       const end = new Date(rangeMatch[2]);
@@ -511,7 +512,22 @@ function ProblemTable({ problems, view, onBack }) {
       };
     }
 
+    const exactDate = new Date(value);
+    if (!Number.isNaN(exactDate.getTime())) {
+      return { type: 'exact', value: exactDate.getTime() };
+    }
+
     return null;
+  };
+
+  const parseDateFilter = (value) => {
+    const raw = value.trim();
+    if (!raw) return null;
+
+    return raw
+      .split(',')
+      .map(part => parseDateCondition(part))
+      .filter(Boolean);
   };
 
   const matchesDateFilter = (date, label) => {
@@ -521,33 +537,37 @@ function ProblemTable({ problems, view, onBack }) {
     const hasExpr = expr.length > 0;
 
     if (!hasSelections && !hasExpr) return true;
-    const exactMatch = hasSelections && label && selectedDates.includes(label);
+
+    const conditionList = parseDateFilter(expr);
     let exprMatch = false;
 
-    if (hasExpr) {
-      const condition = parseDateFilter(expr);
-      if (condition && date) {
+    if (hasExpr && conditionList && date) {
+      exprMatch = conditionList.some(condition => {
         if (condition.type === 'inequality') {
-          if (condition.op === '<') exprMatch = date.getTime() < condition.value;
-          if (condition.op === '<=') exprMatch = date.getTime() <= condition.value;
-          if (condition.op === '>') exprMatch = date.getTime() > condition.value;
-          if (condition.op === '>=') exprMatch = date.getTime() >= condition.value;
+          if (condition.op === '<') return date.getTime() < condition.value;
+          if (condition.op === '<=') return date.getTime() <= condition.value;
+          if (condition.op === '>') return date.getTime() > condition.value;
+          if (condition.op === '>=') return date.getTime() >= condition.value;
         }
         if (condition.type === 'range') {
-          exprMatch = date.getTime() >= condition.min && date.getTime() <= condition.max;
+          return date.getTime() >= condition.min && date.getTime() <= condition.max;
         }
-      }
+        if (condition.type === 'exact') {
+          return date.getTime() === condition.value;
+        }
+        return false;
+      });
     }
 
-    if (hasSelections && hasExpr) {
-      return exactMatch || exprMatch;
+    if (hasExpr) {
+      return exprMatch;
     }
 
-    if (hasSelections) {
-      return exactMatch;
+    if (hasSelections && label) {
+      return selectedDates.includes(label);
     }
 
-    return exprMatch;
+    return true;
   };
 
   const matchesView = (p) => {
@@ -787,126 +807,208 @@ function ProblemTable({ problems, view, onBack }) {
                     <th className="px-4 py-3 text-left text-xs md:text-sm font-semibold text-slate-600 uppercase tracking-wider">Tags</th>
                   </tr>
                   <tr className="bg-slate-100">
-                    <th className="px-4 py-2 align-top text-left text-xs md:text-sm text-slate-500">
-                      <input
-                        value={numberFilter}
-                        onChange={(e) => setNumberFilter(e.target.value)}
-                        placeholder="Exact number, 5-10, >=20"
-                        className="w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-slate-700 text-xs md:text-sm focus:border-blue-500 focus:outline-none"
-                      />
+                    <th className="px-4 py-2 text-left text-xs md:text-sm text-slate-500">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setNumberDialogOpen((value) => !value);
+                          setStatusDialogOpen(false);
+                          setDateDialogOpen(false);
+                          setTagDialogOpen(false);
+                        }}
+                        className="rounded-full border border-slate-300 bg-white px-3 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                      >
+                        {numberDialogOpen ? 'Close filter' : 'Filter'}
+                      </button>
                     </th>
-                    <th className="px-4 py-2 align-top text-left text-xs md:text-sm text-slate-500">
-                      <div className="space-y-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setStatusFilter(statusOptions)}
-                            className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
-                          >
-                            All
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setStatusFilter([])}
-                            className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
-                          >
-                            None
-                          </button>
-                        </div>
-                        <div className="grid grid-cols-2 gap-1 max-h-44 overflow-auto pr-1">
-                          {statusOptions.length > 0 ? statusOptions.map((value) => (
-                            <label key={value} className="inline-flex items-center gap-2 text-[11px] text-slate-700">
-                              <input
-                                type="checkbox"
-                                checked={statusFilter.includes(value)}
-                                onChange={() => toggleSelection(value, statusFilter, setStatusFilter)}
-                                className="h-4 w-4 rounded border-slate-300 text-blue-600"
-                              />
-                              {value}
-                            </label>
-                          )) : (
-                            <div className="text-[11px] text-slate-400">No statuses</div>
-                          )}
-                        </div>
-                      </div>
+                    <th className="px-4 py-2 text-left text-xs md:text-sm text-slate-500">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setStatusDialogOpen((value) => !value);
+                          setNumberDialogOpen(false);
+                          setDateDialogOpen(false);
+                          setTagDialogOpen(false);
+                        }}
+                        className="rounded-full border border-slate-300 bg-white px-3 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                      >
+                        {statusDialogOpen ? 'Close filter' : 'Filter'}
+                      </button>
                     </th>
-                    <th className="px-4 py-2 align-top text-left text-xs md:text-sm text-slate-500">
-                      <div className="space-y-2">
-                        <input
-                          value={dateFilterExpr}
-                          onChange={(e) => setDateFilterExpr(e.target.value)}
-                          placeholder="<= 1/1/2025 or 2024-01-01 - 2024-06-01"
-                          className="w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-slate-700 text-xs md:text-sm focus:border-blue-500 focus:outline-none"
-                        />
-                        <div className="flex flex-wrap items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setDateSelections(lastUpdatedOptions)}
-                            className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
-                          >
-                            All
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setDateSelections([])}
-                            className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
-                          >
-                            None
-                          </button>
-                        </div>
-                        <div className="grid grid-cols-2 gap-1 max-h-44 overflow-auto pr-1">
-                          {lastUpdatedOptions.length > 0 ? lastUpdatedOptions.map((value) => (
-                            <label key={value} className="inline-flex items-center gap-2 text-[11px] text-slate-700">
-                              <input
-                                type="checkbox"
-                                checked={dateSelections.includes(value)}
-                                onChange={() => toggleSelection(value, dateSelections, setDateSelections)}
-                                className="h-4 w-4 rounded border-slate-300 text-blue-600"
-                              />
-                              {value}
-                            </label>
-                          )) : (
-                            <div className="text-[11px] text-slate-400">No dates</div>
-                          )}
-                        </div>
-                      </div>
+                    <th className="px-4 py-2 text-left text-xs md:text-sm text-slate-500">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDateDialogOpen((value) => !value);
+                          setNumberDialogOpen(false);
+                          setStatusDialogOpen(false);
+                          setTagDialogOpen(false);
+                        }}
+                        className="rounded-full border border-slate-300 bg-white px-3 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                      >
+                        {dateDialogOpen ? 'Close filter' : 'Filter'}
+                      </button>
                     </th>
-                    <th className="px-4 py-2 align-top text-left text-xs md:text-sm text-slate-500">
-                      <div className="space-y-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setTagFilter(tagOptions)}
-                            className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
-                          >
-                            All
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setTagFilter([])}
-                            className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
-                          >
-                            None
-                          </button>
-                        </div>
-                        <div className="grid grid-cols-2 gap-1 max-h-44 overflow-auto pr-1">
-                          {tagOptions.length > 0 ? tagOptions.map((value) => (
-                            <label key={value} className="inline-flex items-center gap-2 text-[11px] text-slate-700">
-                              <input
-                                type="checkbox"
-                                checked={tagFilter.includes(value)}
-                                onChange={() => toggleSelection(value, tagFilter, setTagFilter)}
-                                className="h-4 w-4 rounded border-slate-300 text-blue-600"
-                              />
-                              {value}
-                            </label>
-                          )) : (
-                            <div className="text-[11px] text-slate-400">No tags</div>
-                          )}
-                        </div>
-                      </div>
+                    <th className="px-4 py-2 text-left text-xs md:text-sm text-slate-500">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setTagDialogOpen((value) => !value);
+                          setNumberDialogOpen(false);
+                          setStatusDialogOpen(false);
+                          setDateDialogOpen(false);
+                        }}
+                        className="rounded-full border border-slate-300 bg-white px-3 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                      >
+                        {tagDialogOpen ? 'Close filter' : 'Filter'}
+                      </button>
                     </th>
                   </tr>
+                  {(numberDialogOpen || statusDialogOpen || dateDialogOpen || tagDialogOpen) && (
+                    <tr>
+                      <td colSpan="4" className="px-4 py-4 bg-slate-100">
+                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
+                          {numberDialogOpen && (
+                            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                              <h3 className="text-sm font-semibold text-slate-800">Number Filter</h3>
+                              <p className="text-xs text-slate-500">Exact values, ranges, inequalities, or comma-separated lists.</p>
+                              <input
+                                value={numberFilter}
+                                onChange={(e) => setNumberFilter(e.target.value)}
+                                placeholder="e.g. 5, 7, 10-20, >=30"
+                                className="mt-3 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-800 text-sm focus:border-blue-500 focus:outline-none"
+                              />
+                            </div>
+                          )}
+                          {statusDialogOpen && (
+                            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                              <div className="flex items-center justify-between gap-3">
+                                <h3 className="text-sm font-semibold text-slate-800">Status Filter</h3>
+                                <div className="flex flex-wrap gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => setStatusFilter(statusOptions)}
+                                    className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                                  >
+                                    All
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setStatusFilter([])}
+                                    className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                                  >
+                                    None
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="mt-3 grid grid-cols-2 gap-2 max-h-52 overflow-auto pr-1">
+                                {statusOptions.length > 0 ? statusOptions.map((value) => (
+                                  <label key={value} className="inline-flex items-center gap-2 text-[11px] text-slate-700">
+                                    <input
+                                      type="checkbox"
+                                      checked={statusFilter.includes(value)}
+                                      onChange={() => toggleSelection(value, statusFilter, setStatusFilter)}
+                                      className="h-4 w-4 rounded border-slate-300 text-blue-600"
+                                    />
+                                    {value}
+                                  </label>
+                                )) : (
+                                  <div className="text-[11px] text-slate-400">No statuses available</div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                          {dateDialogOpen && (
+                            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                              <div className="flex items-center justify-between gap-3">
+                                <h3 className="text-sm font-semibold text-slate-800">Last Updated Filter</h3>
+                                <div className="flex flex-wrap gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => setDateSelections(lastUpdatedOptions)}
+                                    className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                                  >
+                                    All
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setDateSelections([])}
+                                    className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                                  >
+                                    None
+                                  </button>
+                                </div>
+                              </div>
+                              <input
+                                value={dateFilterExpr}
+                                onChange={(e) => setDateFilterExpr(e.target.value)}
+                                placeholder="e.g. 2024-01-01, <= 2024-06-01, 2024-01-01 - 2024-03-01"
+                                className="mt-3 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-800 text-sm focus:border-blue-500 focus:outline-none"
+                              />
+                              <p className="mt-2 text-xs text-slate-500">Text expressions override checkbox selections.</p>
+                              <div className="mt-3 grid grid-cols-2 gap-2 max-h-52 overflow-auto pr-1">
+                                {lastUpdatedOptions.length > 0 ? lastUpdatedOptions.map((value) => (
+                                  <label key={value} className="inline-flex items-center gap-2 text-[11px] text-slate-700">
+                                    <input
+                                      type="checkbox"
+                                      checked={dateSelections.includes(value)}
+                                      onChange={() => toggleSelection(value, dateSelections, setDateSelections)}
+                                      className="h-4 w-4 rounded border-slate-300 text-blue-600"
+                                    />
+                                    {value}
+                                  </label>
+                                )) : (
+                                  <div className="text-[11px] text-slate-400">No dates available</div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                          {tagDialogOpen && (
+                            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                              <div className="flex items-center justify-between gap-3">
+                                <h3 className="text-sm font-semibold text-slate-800">Tags Filter</h3>
+                                <div className="flex flex-wrap gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => setTagFilter(tagOptions)}
+                                    className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                                  >
+                                    All
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setTagFilter([])}
+                                    className="rounded-full border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                                  >
+                                    None
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="mt-3 grid grid-cols-2 gap-2 max-h-52 overflow-auto pr-1">
+                                {tagOptions.length > 0 ? tagOptions.map((value) => (
+                                  <label key={value} className="inline-flex items-center gap-2 text-[11px] text-slate-700">
+                                    <input
+                                      type="checkbox"
+                                      checked={tagFilter.includes(value)}
+                                      onChange={() => toggleSelection(value, tagFilter, setTagFilter)}
+                                      className="h-4 w-4 rounded border-slate-300 text-blue-600"
+                                    />
+                                    {value}
+                                  </label>
+                                )) : (
+                                  <div className="text-[11px] text-slate-400">No tags available</div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   {sortedProblems.length > 0 ? (
