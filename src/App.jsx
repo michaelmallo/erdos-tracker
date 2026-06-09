@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine
 } from 'recharts';
@@ -570,7 +570,7 @@ function ProblemTable({ problems, view, onBack }) {
     return true;
   };
 
-  const matchesView = (p) => {
+  const matchesView = useCallback((p) => {
     const statusState = p.status?.state ? String(p.status.state).toLowerCase() : 'open';
 
     switch (view) {
@@ -588,12 +588,12 @@ function ProblemTable({ problems, view, onBack }) {
       default:
         return true;
     }
-  };
+  }, [view]);
 
   const viewProblems = useMemo(() => {
     if (!Array.isArray(problems)) return [];
     return problems.filter(matchesView);
-  }, [problems, view]);
+  }, [problems, matchesView]);
 
   const statusOptions = useMemo(() => {
     return [...new Set(viewProblems.map(p => String(p.status?.state || 'Open')))].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
@@ -615,19 +615,25 @@ function ProblemTable({ problems, view, onBack }) {
   }, [viewProblems]);
 
   useEffect(() => {
-    if (!statusInitialized && statusOptions.length > 0) {
-      setStatusFilter(statusOptions);
-      setStatusInitialized(true);
-    }
+    const toInitStatus = !statusInitialized && statusOptions.length > 0;
+    const toInitDate = !dateInitialized && lastUpdatedOptions.length > 0;
+    const toInitTags = !tagsInitialized && tagOptions.length > 0;
 
-    if (!dateInitialized && lastUpdatedOptions.length > 0) {
-      setDateSelections(lastUpdatedOptions);
-      setDateInitialized(true);
-    }
-
-    if (!tagsInitialized && tagOptions.length > 0) {
-      setTagFilter(tagOptions);
-      setTagsInitialized(true);
+    if (toInitStatus || toInitDate || toInitTags) {
+      Promise.resolve().then(() => {
+        if (toInitStatus) {
+          setStatusFilter(statusOptions);
+          setStatusInitialized(true);
+        }
+        if (toInitDate) {
+          setDateSelections(lastUpdatedOptions);
+          setDateInitialized(true);
+        }
+        if (toInitTags) {
+          setTagFilter(tagOptions);
+          setTagsInitialized(true);
+        }
+      });
     }
   }, [statusOptions, lastUpdatedOptions, tagOptions, statusInitialized, dateInitialized, tagsInitialized]);
 
@@ -644,9 +650,7 @@ function ProblemTable({ problems, view, onBack }) {
 
     return viewProblems.filter(p => {
       const statusStateRaw = String(p.status?.state || 'Open');
-      const statusState = statusStateRaw.toLowerCase();
       const problemNumberValue = p.number ?? p.id;
-      const problemNumberString = String(problemNumberValue || '');
       const problemDate = p.status?.last_update ? new Date(p.status.last_update) : null;
       const lastUpdatedLabel = problemDate ? problemDate.toLocaleDateString() : '';
       const tagList = Array.isArray(p.tags) ? p.tags : [];
