@@ -42,7 +42,7 @@ export default function App() {
         disprovedCount++;
       } else if (statusState.includes('proved')) {
         provedCount++;
-      } else if (statusState.includes('solved') || statusState.includes('not provable') || statusState.includes('not disprovable')) {
+      } else if (statusState.includes('solved') || statusState.includes('not provable')) {
         otherwiseSolvedCount++;
       }
       
@@ -574,14 +574,12 @@ function ProblemTable({ problems, view, onBack }) {
     const statusState = p.status?.state ? String(p.status.state).toLowerCase() : 'open';
 
     switch (view) {
-      case 'solved':
-        return statusState.includes('proved') || statusState.includes('disproved') ||
-               statusState.includes('solved') || statusState.includes('not provable') ||
-               statusState.includes('not disprovable');
+            case 'solved':
+         return statusState.includes('proved') || statusState.includes('disproved') ||
+           statusState.includes('solved') || statusState.includes('not provable');
       case 'open':
-        return !statusState.includes('proved') && !statusState.includes('disproved') &&
-               !statusState.includes('solved') && !statusState.includes('not provable') &&
-               !statusState.includes('not disprovable');
+         return !statusState.includes('proved') && !statusState.includes('disproved') &&
+           !statusState.includes('solved') && !statusState.includes('not provable');
       case 'aiAssisted':
         return statusState.includes('(lean)');
       case 'total':
